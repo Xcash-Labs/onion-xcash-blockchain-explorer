@@ -148,7 +148,6 @@ set(LIBRARIES
         ${WALLET_CRYPTO} 
         multisig
         daemonizer
-        blocks
         lmdb
         ringct
         ringct_basic

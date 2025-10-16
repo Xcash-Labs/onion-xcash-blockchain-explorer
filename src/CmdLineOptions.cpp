@@ -66,7 +66,7 @@ namespace xmreg
                 ("template-path", value<string>()->default_value("./templates"),
                  "path to templates folder, e.g., ~/onion-monero-blockchain-explorer/build/templates")
                 ("bc-path,b", value<string>(),
-                 "path to lmdb folder of the blockchain, e.g., ~/.bitmonero/lmdb")
+                 "path to lmdb folder of the blockchain, e.g., ~/.X-CASH/lmdb")
                 ("ssl-crt-file", value<string>(),
                  "path to crt file for ssl (https) functionality")
                 ("ssl-key-file", value<string>(),
