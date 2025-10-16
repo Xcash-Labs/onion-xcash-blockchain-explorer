@@ -1942,7 +1942,7 @@ show_my_outputs(string tx_hash_str,
 
     if (xmr_address_str.empty())
     {
-        return string("Monero address not provided!");
+        return string("XCash address not provided!");
     }
 
     if (viewkey_str.empty())
@@ -5450,7 +5450,7 @@ json_outputs(string tx_hash_str,
     if (address_str.empty())
     {
         j_response["status"]  = "error";
-        j_response["message"] = "Monero address not provided";
+        j_response["message"] = "XCash address not provided";
         return j_response;
     }
 
@@ -5690,7 +5690,7 @@ json_outputsblocks(string _limit,
     if (address_str.empty())
     {
         j_response["status"]  = "error";
-        j_response["message"] = "Monero address not provided";
+        j_response["message"] = "XCash address not provided";
         return j_response;
     }
 
