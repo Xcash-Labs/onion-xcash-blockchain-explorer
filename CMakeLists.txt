@@ -15,7 +15,7 @@ endif()
 
 
 if (NOT MONERO_DIR)
-    set(MONERO_DIR ~/xcash-official/xcash-labs-core)
+    set(MONERO_DIR ~/monero)
 endif()
 
 message(STATUS MONERO_DIR ": ${MONERO_DIR}")
