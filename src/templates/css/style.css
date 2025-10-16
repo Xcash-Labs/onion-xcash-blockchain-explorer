@@ -154,6 +154,12 @@ form{ display:inline-block; text-align:center; }
   display:none;
 }
 
+.field-multiline{
+  white-space: pre-wrap;      /* keep newlines + wrap long lines */
+  overflow-wrap: anywhere;    /* break very long tokens */
+  word-break: break-word;     /* fallback for older engines */
+}
+
 [type=radio]:checked ~ label{
   background: linear-gradient(180deg, rgba(34,211,238,.18), rgba(124,58,237,.12));
   border-color: var(--accent);
@@ -194,3 +200,14 @@ input#toggle-1[type=checkbox]:checked ~ div#decoded-inputs{ display:block; }
 @media (prefers-reduced-motion: reduce){
   *{ transition: none !important; }
 }
+
+/* Tighten the top of the page/form */
+.center { padding-top: 8px; }                 /* was bigger before */
+.center > :first-child { margin-top: 0 !important; }
+
+h1, h2 { margin-top: 0.25rem; }               /* kill big default top margins */
+form { margin-top: 0; }                       /* ensure no stray gap from forms */
+.tabs { margin-top: 12px; }                   /* optional: bring tabs closer */
+
+/* If your table is the first element, keep its header snug */
+table:first-child { margin-top: 0; }
