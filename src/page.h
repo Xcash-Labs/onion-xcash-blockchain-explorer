@@ -312,7 +312,7 @@ struct tx_details
     // key images of inputs
     vector<txin_to_key> input_key_imgs;
 
-    // public keys and xmr amount of outputs
+    // public keys and xca amount of outputs
     vector<output_tuple_with_tag> output_pub_keys;
 
     mstch::map
@@ -1230,7 +1230,7 @@ show_block(uint64_t _blk_height)
     context["sum_fees"]
             = xmreg::xmr_amount_to_str(sum_fees, "{:0.6f}", false);
 
-    // get xmr in the block reward
+    // get xca in the block reward
     context["blk_reward"]
             = xmreg::xmr_amount_to_str(txd_coinbase.xmr_outputs - sum_fees, "{:0.6f}");
 
@@ -1968,7 +1968,7 @@ show_my_outputs(string tx_hash_str,
     if (!xmreg::parse_str_address(xmr_address_str,  address_info, nettype))
     {
         cerr << "Cant parse string address: " << xmr_address_str << endl;
-        return string("Cant parse xmr address: " + xmr_address_str);
+        return string("Cant parse xca address: " + xmr_address_str);
     }
 
     // parse string representing given private key
@@ -2230,7 +2230,7 @@ show_my_outputs(string tx_hash_str,
 
         // get the tx output public key
         // that normally would be generated for us,
-        // if someone had sent us some xmr.
+        // if someone had sent us some xca.
         public_key tx_pubkey;
 
         derive_public_key(derivation,
@@ -2343,16 +2343,16 @@ show_my_outputs(string tx_hash_str,
 
         vector<txin_to_key> input_key_imgs = xmreg::get_key_images(tx);
 
-        // to hold sum of xmr in matched mixins, those that
+        // to hold sum of xca in matched mixins, those that
         // perfectly match mixin public key with outputs in mixn_tx.
-        uint64_t sum_mixin_xmr {0};
+        uint64_t sum_mixin_xca {0};
 
         // this is used for the final check. we assument that number of
         // parefct matches must be equal to number of inputs in a tx.
         uint64_t no_of_matched_mixins {0};
 
         // Hold all possible mixins that we found. This is only used so that
-        // we get number of all posibilities, and their total xmr amount
+        // we get number of all posibilities, and their total xca amount
         // (useful for unit testing)
         //                     public_key    , amount
         std::vector<std::pair<crypto::public_key, uint64_t>> all_possible_mixins;
@@ -2562,7 +2562,7 @@ show_my_outputs(string tx_hash_str,
 
                     // get the tx output public key
                     // that normally would be generated for us,
-                    // if someone had sent us some xmr.
+                    // if someone had sent us some xca.
                     public_key tx_pubkey_generated;
 
                     derive_public_key(derivation,
@@ -2645,7 +2645,7 @@ show_my_outputs(string tx_hash_str,
                         found_something = true;
                         show_key_images = true;
 
-                        // increase sum_mixin_xmr only when
+                        // increase sum_mixin_xca only when
                         // public key of an outputs used in ring signature,
                         // matches a public key in a mixin_tx
                         if (output_pub_key != output_data.pubkey)
@@ -2662,11 +2662,11 @@ show_my_outputs(string tx_hash_str,
                             // in amounts, not only in output public keys
                             if (mixin_tx.version < 2 && amount == in_key.amount)
                             {
-                                sum_mixin_xmr += amount;
+                                sum_mixin_xca += amount;
                             }
                             else if (mixin_tx.version == 2) // ringct
                             {
-                                sum_mixin_xmr += amount;
+                                sum_mixin_xca += amount;
                                 ringct_amount += amount;
                             }
 
@@ -2725,15 +2725,15 @@ show_my_outputs(string tx_hash_str,
 
         context["show_inputs"]   = show_key_images;
         context["inputs_no"]     = static_cast<uint64_t>(inputs.size());
-        context["sum_mixin_xmr"] = xmreg::xmr_amount_to_str(
-                sum_mixin_xmr, "{:0.6f}", false);
+        context["sum_mixin_xca"] = xmreg::xmr_amount_to_str(
+                sum_mixin_xca, "{:0.6f}", false);
 
 
         uint64_t possible_spending  {0};
 
         //cout << "\nall_possible_mixins: " << all_possible_mixins.size() << '\n';
 
-        // useful for unit testing as it provides total xmr sum
+        // useful for unit testing as it provides total xca sum
         // of possible mixins
         uint64_t all_possible_mixins_amount1  {0};
 
@@ -2751,11 +2751,11 @@ show_my_outputs(string tx_hash_str,
         // show spending only if sum of mixins is more than
         // what we get + fee, and number of perferctly matched
         // mixis is equal to number of inputs
-        if (sum_mixin_xmr > (sum_xmr + txd.fee)
+        if (sum_mixin_xca > (sum_xmr + txd.fee)
             && no_of_matched_mixins == inputs.size())
         {
             //                  (outcoming    - incoming) - fee
-            possible_spending = (sum_mixin_xmr - sum_xmr) - txd.fee;
+            possible_spending = (sum_mixin_xca - sum_xmr) - txd.fee;
         }
 
         context["possible_spending"] = xmreg::xmr_amount_to_str(
@@ -3360,7 +3360,7 @@ show_checkrawtx(string raw_tx_data, string action)
             // mark that we have signed tx data for use in mstch
             tx_context["have_raw_tx"] = true;
 
-            // provide total mount of inputs xmr
+            // provide total mount of inputs xca
             tx_context["inputs_xmr_sum"] = xmreg::xmr_amount_to_str(inputs_xmr_sum);
 
             // get reference to inputs array created of the tx
@@ -3768,7 +3768,7 @@ show_checkrawkeyimgs(string raw_data, string viewkey_str)
 
     }
 
-    // get xmr address stored in this key image file
+    // get xca address stored in this key image file
     const account_public_address* xmr_address =
             reinterpret_cast<const account_public_address*>(
                     decoded_raw_data.data());
@@ -3903,7 +3903,7 @@ show_checkcheckrawoutput(string raw_data, string viewkey_str)
     // header is public spend and keys
     const size_t header_lenght    = 2 * sizeof(crypto::public_key);
 
-    // get xmr address stored in this key image file
+    // get xca address stored in this key image file
     const account_public_address* xmr_address =
             reinterpret_cast<const account_public_address*>(
                     decoded_raw_data.data());
@@ -5561,7 +5561,7 @@ json_outputs(string tx_hash_str,
 
         // get the tx output public key
         // that normally would be generated for us,
-        // if someone had sent us some xmr.
+        // if someone had sent us some xca.
         public_key tx_pubkey;
 
         derive_public_key(derivation,
@@ -6043,7 +6043,7 @@ find_our_outputs(
 
             // get the tx output public key
             // that normally would be generated for us,
-            // if someone had sent us some xmr.
+            // if someone had sent us some xca.
             public_key tx_pubkey;
 
             derive_public_key(derivation,
@@ -6764,7 +6764,7 @@ get_tx_details(const transaction& tx,
     txd.additional_pks = cryptonote::get_additional_tx_pub_keys_from_extra(tx);
 
 
-    // sum xmr in inputs and ouputs in the given tx
+    // sum xca in inputs and ouputs in the given tx
     const array<uint64_t, 4>& sum_data = summary_of_in_out_rct(
             tx, txd.output_pub_keys, txd.input_key_imgs);
 
