@@ -240,7 +240,7 @@ string
 get_default_lmdb_folder(cryptonote::network_type nettype)
 {
     // default path to monero folder
-    // on linux this is /home/<username>/.bitmonero
+    // on linux this is /home/<username>/.X-CASH
     string default_monero_dir = tools::get_default_data_dir();
 
     if (nettype == cryptonote::network_type::TESTNET)
