@@ -471,14 +471,15 @@ struct tx_details
                 {"has_add_pks"       , !additional_pks.empty()}
         };
 
-        // Parse VRF 0x07 and expose to the template
+        // Parse VRF 0x07 and expose to the template jed 1
         {
           xmreg::vrf07 v;
           const std::string extra_hex = get_extra_str();  // ← use the method, not mstch::get
           bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
-          
-          std::cerr << "[tx_details] has_vrf_extra=" << (ok?"true":"false")
-          << " len(extra)=" << extra_hex.size() << "\n";
+
+        std::cout << "[tx_details] has_vrf_extra=" << (ok?"true":"false")
+          << " len(extra)=" << extra_hex.size() << std::endl;
+
 
           txd_map["has_vrf_extra"] = ok;
           if (ok) {
@@ -6265,6 +6266,29 @@ get_tx_json(const transaction& tx, const tx_details& txd)
             {"payment_id8" , (txd.payment_id8 != null_hash8 ? pod_to_hex(txd.payment_id8) : "")},
     };
 
+        // Parse VRF 0x07 and expose to the template jed 2
+        {
+          xmreg::vrf07 v;
+          const std::string extra_hex = get_extra_str();  // ← use the method, not mstch::get
+          bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
+
+        std::cout << "[tx_details] has_vrf_extra=" << (ok?"true":"false")
+          << " len(extra)=" << extra_hex.size() << std::endl;
+
+
+          txd_map["has_vrf_extra"] = ok;
+          if (ok) {
+            txd_map["vrf_extra"] = mstch::map{
+                {"tx_pubkey", v.tx_pubkey},
+                {"vrf_proof", v.vrf_proof},
+                {"vrf_beta", v.vrf_beta},
+                {"vrf_pubkey", v.vrf_pubkey},
+                {"total_votes", static_cast<uint64_t>(v.total_votes)},
+                {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
+                {"vote_hash", v.vote_hash}};
+          }
+        }
+
     return j_tx;
 }
 
@@ -6438,6 +6462,29 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
             {"show_more_details_link", true},
             {"construction_time"     , string {}},
     };
+
+            // Parse VRF 0x07 and expose to the template jed 3
+        {
+          xmreg::vrf07 v;
+          const std::string extra_hex = get_extra_str();  // ← use the method, not mstch::get
+          bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
+
+        std::cout << "[tx_details] has_vrf_extra=" << (ok?"true":"false")
+          << " len(extra)=" << extra_hex.size() << std::endl;
+
+
+          txd_map["has_vrf_extra"] = ok;
+          if (ok) {
+            txd_map["vrf_extra"] = mstch::map{
+                {"tx_pubkey", v.tx_pubkey},
+                {"vrf_proof", v.vrf_proof},
+                {"vrf_beta", v.vrf_beta},
+                {"vrf_pubkey", v.vrf_pubkey},
+                {"total_votes", static_cast<uint64_t>(v.total_votes)},
+                {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
+                {"vote_hash", v.vote_hash}};
+          }
+        }
 
     // append tx_json as in raw format to html
     context["tx_json_raw"] = mstch::lambda{[=](const std::string& text) -> mstch::node {
