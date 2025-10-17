@@ -293,7 +293,9 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
   max-width: 100%;
 }
 
-/* Panel: prevent visual spill */
+/* let the tab panel expand and show all children */
 .tabs .content {
-  overflow: hidden; /* or auto, if you'd rather scroll */
+  overflow: visible;    /* or auto if you prefer a scrollbar */
+  height: auto;
+  max-height: none;
 }
