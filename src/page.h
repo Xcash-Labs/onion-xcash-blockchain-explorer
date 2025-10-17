@@ -6266,28 +6266,32 @@ get_tx_json(const transaction& tx, const tx_details& txd)
             {"payment_id8" , (txd.payment_id8 != null_hash8 ? pod_to_hex(txd.payment_id8) : "")},
     };
 
-        // Parse VRF 0x07 and expose to the template jed 2
-        {
-          xmreg::vrf07 v;
-          const std::string extra_hex = txd.get_extra_str();  // ← use the method, not mstch::get
-          bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
+    // --- Parse VRF 0x07 and add to JSON ---
+    {
+        xmreg::vrf07 v;
+        const std::string extra_hex = txd.get_extra_str();
+        const bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
 
-        std::cout << "[tx_details] has_vrf_extra=" << (ok?"true":"false")
-          << " len(extra)=" << extra_hex.size() << std::endl;
+        j_tx["has_vrf_extra"] = ok;
 
-
-          txd_map["has_vrf_extra"] = ok;
-          if (ok) {
-            txd_map["vrf_extra"] = mstch::map{
-                {"tx_pubkey", v.tx_pubkey},
-                {"vrf_proof", v.vrf_proof},
-                {"vrf_beta", v.vrf_beta},
-                {"vrf_pubkey", v.vrf_pubkey},
-                {"total_votes", static_cast<uint64_t>(v.total_votes)},
-                {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
-                {"vote_hash", v.vote_hash}};
-          }
+        if (ok) {
+            j_tx["vrf_extra"] = {
+                {"tx_pubkey",     v.tx_pubkey},
+                {"vrf_proof",     v.vrf_proof},
+                {"vrf_beta",      v.vrf_beta},
+                {"vrf_pubkey",    v.vrf_pubkey},
+                {"total_votes",   static_cast<uint64_t>(v.total_votes)},
+                {"winning_vote",  static_cast<uint64_t>(v.winning_vote)},
+                {"vote_hash",     v.vote_hash}
+            };
+        } else {
+            // optional: include debug breadcrumbs (remove later)
+            j_tx["vrf_extra"] = nullptr;
+            j_tx["extra_len"] = static_cast<uint64_t>(extra_hex.size());
+            if (!extra_hex.empty())
+                j_tx["extra_preview"] = extra_hex.substr(0, 96);
         }
+    }
 
     return j_tx;
 }
@@ -6473,7 +6477,7 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
           << " len(extra)=" << extra_hex.size() << std::endl;
 
 
-          txd_map["has_vrf_extra"] = ok;
+          context["has_vrf_extra"] = ok;
           if (ok) {
             txd_map["vrf_extra"] = mstch::map{
                 {"tx_pubkey", v.tx_pubkey},
