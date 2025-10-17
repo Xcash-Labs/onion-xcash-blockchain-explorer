@@ -64,7 +64,7 @@ namespace xmreg
                 ("concurrency,c", value<size_t>()->default_value(0),
                  "number of threads handling http queries. Default is 0 which means it is based you on the cpu")
                 ("template-path", value<string>()->default_value("./templates"),
-                 "path to templates folder, e.g., ~/onion-monero-blockchain-explorer/build/templates")
+                 "path to templates folder, e.g., ~/onion-xcash-blockchain-explorer/build/templates")
                 ("bc-path,b", value<string>(),
                  "path to lmdb folder of the blockchain, e.g., ~/.X-CASH/lmdb")
                 ("ssl-crt-file", value<string>(),
