@@ -154,8 +154,10 @@ form{ display:inline-block; text-align:center; }
   display:none;
 }
 
+
 .field-multiline{
-  white-space: pre-wrap;      /* keep newlines + wrap long lines */
+/*  white-space: pre-wrap; */ 
+  white-space: normal;
   overflow-wrap: anywhere;    /* break very long tokens */
   word-break: break-word;     /* fallback for older engines */
 }
