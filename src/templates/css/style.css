@@ -259,3 +259,18 @@ table:first-child { margin-top: 0; }
   }
   .vrf-grid .label { margin-top: 6px; }
 }
+
+/* Remove default gaps between table rows/cells */
+table { border-collapse: collapse; border-spacing: 0; }
+
+/* Tighten the specific cell */
+td.field-multiline { padding-top: 0; padding-bottom: 0; }
+
+/* Make sure the card itself doesn't add top margin */
+td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
+
+/* Ensure the very first child in the cell can't push down */
+td.field-multiline > :first-child { margin-top: 0; }
+
+/* Title: no top margin */
+.vrf-title { margin-top: 0; }
