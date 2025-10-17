@@ -221,7 +221,6 @@ table:first-child { margin-top: 0; }
   width: 100%;           /* new */
   box-sizing: border-box;/* new: padding counted inside width */
   text-align: left;
-  /* remove max-width */
   padding: 10px 14px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -260,4 +259,28 @@ table:first-child { margin-top: 0; }
     grid-template-columns: 1fr;
   }
   .vrf-grid .label { margin-top: 6px; }
+}
+
+/* --- VRF block compact overrides --- */
+.vrf-card {
+  padding: 6px 12px;      /* was 10px 14px: tighter top/bottom */
+  margin: 2px 0 4px;      /* add small outer margins; keeps bottom snug */
+}
+
+.vrf-title {
+  margin: 0 0 6px;        /* was 2px 0 10px */
+  line-height: 1.2;       /* tighter heading line spacing */
+}
+
+.vrf-grid {
+  row-gap: 4px;           /* was 6px: slightly tighter rows */
+}
+
+/* Ensure no stray bottom margin from the last child inside the card */
+.vrf-card > :last-child { margin-bottom: 0; }
+
+/* If the table cell is adding extra vertical padding, tighten it */
+td.field-multiline {
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
