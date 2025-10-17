@@ -205,41 +205,58 @@ static inline std::string bin_to_hex(const std::string& b) {
   return h;
 }
 
-static inline bool parse_vrf_07_extra_hex(const std::string& extra_hex, vrf07& out) {
-  std::string x;
-  if (!hex_to_bin(extra_hex, x)) return false;
-  size_t i = 0;
+static inline bool parse_vrf_07_extra_hex(const std::string& extra_hex, vrf07& out){
+    std::string x; if(!hex_to_bin(extra_hex, x)) return false;
+    size_t i = 0;
+    bool have_pubkey = false;
 
-  // 0x01 tx pubkey
-  if (i >= x.size() || (uint8_t)x[i++] != 0x01) return false;
-  if (i + 32 > x.size()) return false;
-  out.tx_pubkey = bin_to_hex(x.substr(i, 32));
-  i += 32;
+    auto skip_block = [&](size_t& pos)->bool{
+        if (pos >= x.size()) return false;
+        uint64_t len = read_leb128(x, pos);
+        if (pos + len > x.size()) return false;
+        pos += len;
+        return true;
+    };
 
-  // 0x07 VRF blob
-  if (i >= x.size() || (uint8_t)x[i++] != 0x07) return false;
-  uint64_t len = read_leb128(x, i);
-  if (i + len > x.size() || len < 210) return false;
+    while (i < x.size()) {
+        uint8_t tag = (uint8_t)x[i++];
 
-  const std::string pl = x.substr(i, len);
-  size_t o = 0;
+        if (tag == 0x01) {
+            // tx pubkey (32 bytes)
+            if (i + 32 > x.size()) return false;
+            out.tx_pubkey = bin_to_hex(x.substr(i, 32));
+            i += 32;
+            have_pubkey = true;
+            continue;
+        }
 
-  if (o + 80 > pl.size()) return false;
-  out.vrf_proof = bin_to_hex(pl.substr(o, 80));
-  o += 80;
-  if (o + 64 > pl.size()) return false;
-  out.vrf_beta = bin_to_hex(pl.substr(o, 64));
-  o += 64;
-  if (o + 32 > pl.size()) return false;
-  out.vrf_pubkey = bin_to_hex(pl.substr(o, 32));
-  o += 32;
-  if (o + 1 > pl.size()) return false;
-  out.total_votes = (uint8_t)pl[o++];
-  if (o + 1 > pl.size()) return false;
-  out.winning_vote = (uint8_t)pl[o++];
-  if (o + 32 > pl.size()) return false;
-  out.vote_hash = bin_to_hex(pl.substr(o, 32));
-  return true;
+        if (tag == 0x07) {
+            // VRF blob with LEB128 length, expect 210 bytes
+            uint64_t len = read_leb128(x, i);
+            if (i + len > x.size() || len < 210) return false;
+
+            const std::string pl = x.substr(i, len);
+            size_t o = 0;
+
+            if (o+80 > pl.size()) return false; out.vrf_proof  = bin_to_hex(pl.substr(o,80)); o+=80;
+            if (o+64 > pl.size()) return false; out.vrf_beta   = bin_to_hex(pl.substr(o,64)); o+=64;
+            if (o+32 > pl.size()) return false; out.vrf_pubkey = bin_to_hex(pl.substr(o,32)); o+=32;
+            if (o+1  > pl.size()) return false; out.total_votes  = (uint8_t)pl[o++];
+            if (o+1  > pl.size()) return false; out.winning_vote = (uint8_t)pl[o++];
+            if (o+32 > pl.size()) return false; out.vote_hash   = bin_to_hex(pl.substr(o,32));
+
+            // success if we at least had a pubkey somewhere earlier (nice-to-have)
+            return have_pubkey || !out.tx_pubkey.empty();
+        }
+
+        // Unknown/other tag → it must be a length-prefixed block; skip it
+        if (!skip_block(i)) {
+            // if it wasn’t length-prefixed (malformed), bail out
+            return false;
+        }
+    }
+
+    return false; // never found 0x07
 }
 // ---- end decoder ----
 
