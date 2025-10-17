@@ -270,5 +270,30 @@ td.field-multiline { padding-top: 7; padding-bottom: 7; }
 /* Make sure the card itself doesn't add top margin */
 td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
 
-/* Ensure the very first child in the cell can't push down 
-td.field-multiline > :first-child { margin-top: 0; } */
+/* Inputs & textareas: responsive, no overflow */
+.tabs .content form.style-1 input[type="text"],
+.tabs .content form.style-1 input[type="email"],
+.tabs .content form.style-1 input[type="password"],
+.tabs .content form.style-1 textarea {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin-top: 6px !important;
+}
+
+/* First field: a little tighter */
+.tabs .content form.style-1 input[type="text"]:first-of-type {
+  margin-top: 2px !important;
+}
+
+/* Submit button: stay inside container */
+.tabs .content form.style-1 input[type="submit"] {
+  display: inline-block;
+  max-width: 100%;
+}
+
+/* Panel: prevent visual spill */
+.tabs .content {
+  overflow: hidden; /* or auto, if you'd rather scroll */
+}
