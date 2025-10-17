@@ -261,14 +261,65 @@ table:first-child { margin-top: 0; }
   .vrf-grid .label { margin-top: 6px; }
 }
 
-/* Remove default gaps between table rows/cells */
+/* Remove default gaps between table rows/cells (keep just once) */
 table { border-collapse: collapse; border-spacing: 0; }
 
-/* Tighten the specific cell */
+/* Tighten the specific VRF cell */
 td.field-multiline { padding-top: 7px; padding-bottom: 7px; }
-
-/* Make sure the card itself doesn't add top margin */
 td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
+
+/* VRF card & grid */
+.vrf-card {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  padding: 0 14px;                 /* top is handled above */
+  border: 1px solid var(--border); /* use theme token */
+  border-radius: 8px;
+  background: var(--panel);        /* or keep #fafafa if you want contrast */
+}
+.vrf-title {
+  text-align: center;
+  font-weight: 600;
+  margin: 2px 0 10px;
+}
+.vrf-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) 1fr;
+  column-gap: 12px;
+  row-gap: 6px;
+  align-items: start;
+}
+.vrf-grid .label { font-weight: 600; justify-self: start; }
+.mono {
+  font-family: var(--font-mono);
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+/* Stack VRF grid on small screens */
+@media (max-width: 560px) {
+  .vrf-grid { grid-template-columns: 1fr; }
+  .vrf-grid .label { margin-top: 6px; }
+}
+
+/* Tabs: panel behavior (consolidated) */
+.tabs .content {
+  position: absolute; top: 42px; left: 0; right: 0; bottom: 0;
+  background: var(--panel);
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 0 12px 12px 12px;
+  display: none;
+
+  /* allow content to render fully and wrap long tokens */
+  overflow: visible;
+  height: auto;
+  max-height: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 
 /* Inputs & textareas: responsive, no overflow */
 .tabs .content form.style-1 input[type="text"],
@@ -282,26 +333,20 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
   margin-top: 6px !important;
 }
 
-.tabs .content {
-  overflow: visible;
-  height: auto;
-  max-height: none;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-/* Submit button: full-width, no float, consistent spacing */
+/* Submit button: natural width, no float */
 .tabs .content form.style-1 input[type="submit"] {
-  display: block;
-  width: 100%;
-  max-width: 100%;
+  display: inline-block;   /* shrink to fit label */
+  width: auto;             /* not 100% */
+  max-width: 100%;         /* still safe on tiny screens */
   box-sizing: border-box;
   margin-top: 8px;
   float: none;
 }
 
-/* let the tab panel expand and show all children */
-.tabs .content {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
+.center { padding-top: 8px; }
+.center > :first-child { margin-top: 0 !important; }
+h1, h2 { margin-top: 0.25rem; }
+form { margin-top: 0; }
+.tabs { margin-top: 12px; }
+table:first-child { margin-top: 0; }
+.tabs .content form.style-1 { text-align: center; }
