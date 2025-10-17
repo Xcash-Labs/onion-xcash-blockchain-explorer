@@ -164,6 +164,84 @@ namespace internal
 namespace xmreg
 {
 
+// ---- Minimal VRF (0x07) extra decoder ----
+struct vrf07 {
+  std::string tx_pubkey, vrf_proof, vrf_beta, vrf_pubkey, vote_hash;
+  uint8_t total_votes{0}, winning_vote{0};
+};
+
+static inline uint64_t read_leb128(const std::string& b, size_t& i) {
+  uint64_t v = 0;
+  unsigned s = 0;
+  while (i < b.size()) {
+    uint8_t c = (uint8_t)b[i++];
+    v |= (uint64_t)(c & 0x7F) << s;
+    if (!(c & 0x80)) break;
+    s += 7;
+  }
+  return v;
+}
+
+static inline bool hex_to_bin(const std::string& h, std::string& out) {
+  if (h.size() % 2) return false;
+  out.resize(h.size() / 2);
+  auto nybble = [](char c) -> int { if(c>='0'&&c<='9')return c-'0'; c|=32; return (c>='a'&&c<='f')?10+(c-'a'):-1; };
+  for (size_t i = 0; i < out.size(); ++i) {
+    int hi = nybble(h[2 * i]), lo = nybble(h[2 * i + 1]);
+    if (hi < 0 || lo < 0) return false;
+    out[i] = char((hi << 4) | lo);
+  }
+  return true;
+}
+
+static inline std::string bin_to_hex(const std::string& b) {
+  static const char* d = "0123456789abcdef";
+  std::string h;
+  h.resize(b.size() * 2);
+  for (size_t i = 0; i < b.size(); ++i) {
+    h[2 * i] = d[(uint8_t)b[i] >> 4];
+    h[2 * i + 1] = d[(uint8_t)b[i] & 0xF];
+  }
+  return h;
+}
+
+static inline bool parse_vrf_07_extra_hex(const std::string& extra_hex, vrf07& out) {
+  std::string x;
+  if (!hex_to_bin(extra_hex, x)) return false;
+  size_t i = 0;
+
+  // 0x01 tx pubkey
+  if (i >= x.size() || (uint8_t)x[i++] != 0x01) return false;
+  if (i + 32 > x.size()) return false;
+  out.tx_pubkey = bin_to_hex(x.substr(i, 32));
+  i += 32;
+
+  // 0x07 VRF blob
+  if (i >= x.size() || (uint8_t)x[i++] != 0x07) return false;
+  uint64_t len = read_leb128(x, i);
+  if (i + len > x.size() || len < 210) return false;
+
+  const std::string pl = x.substr(i, len);
+  size_t o = 0;
+
+  if (o + 80 > pl.size()) return false;
+  out.vrf_proof = bin_to_hex(pl.substr(o, 80));
+  o += 80;
+  if (o + 64 > pl.size()) return false;
+  out.vrf_beta = bin_to_hex(pl.substr(o, 64));
+  o += 64;
+  if (o + 32 > pl.size()) return false;
+  out.vrf_pubkey = bin_to_hex(pl.substr(o, 32));
+  o += 32;
+  if (o + 1 > pl.size()) return false;
+  out.total_votes = (uint8_t)pl[o++];
+  if (o + 1 > pl.size()) return false;
+  out.winning_vote = (uint8_t)pl[o++];
+  if (o + 32 > pl.size()) return false;
+  out.vote_hash = bin_to_hex(pl.substr(o, 32));
+  return true;
+}
+// ---- end decoder ----
 
 using namespace cryptonote;
 using namespace crypto;
@@ -376,11 +454,11 @@ struct tx_details
                 {"has_add_pks"       , !additional_pks.empty()}
         };
 
-        // NEW: parse VRF 0x07 and expose to the template
+        // Parse VRF 0x07 and expose to the template
         {
-          vrf07 v;
-          const auto& extra_hex = mstch::get<std::string>(txd_map["extra"]);
-          bool ok = parse_vrf_07_extra_hex(extra_hex, v);
+          xmreg::vrf07 v;
+          const std::string extra_hex = get_extra_str();  // ← use the method, not mstch::get
+          bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
 
           txd_map["has_vrf_extra"] = ok;
           if (ok) {
