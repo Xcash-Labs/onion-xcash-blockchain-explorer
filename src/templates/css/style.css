@@ -154,7 +154,6 @@ form{ display:inline-block; text-align:center; }
   display:none;
 }
 
-
 .field-multiline{
   white-space: normal;
   overflow-wrap: anywhere;    /* break very long tokens */
@@ -169,6 +168,9 @@ form{ display:inline-block; text-align:center; }
 }
 [type=radio]:checked ~ label ~ .content{ z-index:1; }
 
+[type=radio]:checked ~ label ~ .content {
+  display: block;
+}
 #tab-1:checked ~ .content.tab-1,
 #tab-2:checked ~ .content.tab-2{ display:block; }
 
@@ -304,19 +306,16 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
   .vrf-grid .label { margin-top: 6px; }
 }
 
-/* Tabs: panel behavior (consolidated) */
+/* Tabs: panel behavior — make panels flow, not absolute */
 .tabs .content {
-  position: absolute; top: 42px; left: 0; right: 0; bottom: 0;
+  position: relative;
+  clear: both;
+  margin-top: -1px;
+  display: none;
   background: var(--panel);
   padding: 18px;
   border: 1px solid var(--border);
   border-radius: 0 12px 12px 12px;
-  display: none;
-
-  /* allow content to render fully and wrap long tokens */
-  overflow: visible;
-  height: auto;
-  max-height: none;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -333,11 +332,10 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
   margin-top: 6px !important;
 }
 
-/* Submit button: natural width, no float */
 .tabs .content form.style-1 input[type="submit"] {
-  display: inline-block;   /* shrink to fit label */
-  width: auto;             /* not 100% */
-  max-width: 100%;         /* still safe on tiny screens */
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
   box-sizing: border-box;
   margin-top: 8px;
   float: none;
