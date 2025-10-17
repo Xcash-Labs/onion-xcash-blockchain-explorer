@@ -265,7 +265,7 @@ table:first-child { margin-top: 0; }
 table { border-collapse: collapse; border-spacing: 0; }
 
 /* Tighten the specific cell */
-td.field-multiline { padding-top: 7; padding-bottom: 7; }
+td.field-multiline { padding-top: 7px; padding-bottom: 7px; }
 
 /* Make sure the card itself doesn't add top margin */
 td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
@@ -282,20 +282,26 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
   margin-top: 6px !important;
 }
 
-/* First field: a little tighter */
-.tabs .content form.style-1 input[type="text"]:first-of-type {
-  margin-top: 2px !important;
+.tabs .content {
+  overflow: visible;
+  height: auto;
+  max-height: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-/* Submit button: stay inside container */
+/* Submit button: full-width, no float, consistent spacing */
 .tabs .content form.style-1 input[type="submit"] {
-  display: inline-block;
+  display: block;
+  width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  float: none;
 }
 
 /* let the tab panel expand and show all children */
 .tabs .content {
-  overflow: visible;    /* or auto if you prefer a scrollbar */
-  height: auto;
-  max-height: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
