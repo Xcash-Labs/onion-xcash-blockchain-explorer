@@ -306,7 +306,7 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
 }
 
 .tabs .content {
-  position: absolute;
+  position: relative;
   top: 42px;
   left: 0;
   right: 0;
@@ -318,9 +318,6 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
   overflow-wrap: anywhere;
   word-break: break-word;
 }
-
-/* Give the tabs container a little breathing room below */
-.tabs { padding-bottom: 18px; }
 
 
 /* Inputs & textareas: responsive, no overflow */
