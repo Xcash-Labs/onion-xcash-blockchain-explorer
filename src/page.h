@@ -6479,7 +6479,7 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
 
           context["has_vrf_extra"] = ok;
           if (ok) {
-            txd_map["vrf_extra"] = mstch::map{
+            context["vrf_extra"] = mstch::map{
                 {"tx_pubkey", v.tx_pubkey},
                 {"vrf_proof", v.vrf_proof},
                 {"vrf_beta", v.vrf_beta},
