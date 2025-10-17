@@ -51,6 +51,24 @@
             <td colspan="3" class="field-multiline" style="max-width:700px">Extra: {{extra}}</td>
         </tr>
 
+        <td colspan="3" class="field-multiline" style="max-width:700px">
+            <strong>Extra:</strong>
+            {{#has_vrf_extra}}
+            <div style="margin-top:6px">
+                tx pubkey: {{vrf_extra.tx_pubkey}}<br>
+                vrf_proof:<br>{{vrf_extra.vrf_proof}}<br>
+                vrf_beta:<br>{{vrf_extra.vrf_beta}}<br>
+                vrf_pubkey: {{vrf_extra.vrf_pubkey}}<br>
+                total_votes: {{vrf_extra.total_votes}} &nbsp;
+                winning_vote: {{vrf_extra.winning_vote}}<br>
+                vote_hash: {{vrf_extra.vote_hash}}
+            </div>
+            {{/has_vrf_extra}}
+            {{^has_vrf_extra}}
+            {{extra}}
+            {{/has_vrf_extra}}
+        </td>
+        </tr>
 
     </table>
 

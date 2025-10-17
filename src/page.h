@@ -376,6 +376,24 @@ struct tx_details
                 {"has_add_pks"       , !additional_pks.empty()}
         };
 
+        // NEW: parse VRF 0x07 and expose to the template
+        {
+          vrf07 v;
+          const auto& extra_hex = mstch::get<std::string>(txd_map["extra"]);
+          bool ok = parse_vrf_07_extra_hex(extra_hex, v);
+
+          txd_map["has_vrf_extra"] = ok;
+          if (ok) {
+            txd_map["vrf_extra"] = mstch::map{
+                {"tx_pubkey", v.tx_pubkey},
+                {"vrf_proof", v.vrf_proof},
+                {"vrf_beta", v.vrf_beta},
+                {"vrf_pubkey", v.vrf_pubkey},
+                {"total_votes", static_cast<uint64_t>(v.total_votes)},
+                {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
+                {"vote_hash", v.vote_hash}};
+          }
+        }
 
         return txd_map;
     }
