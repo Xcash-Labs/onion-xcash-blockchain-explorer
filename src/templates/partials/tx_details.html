@@ -56,32 +56,37 @@
 
         {{#has_vrf_extra}}
         <tr>
-        <td colspan="3" class="field-multiline" style="max-width:700px">
+        <td colspan="3" class="field-multiline centered-cell">
+            <div class="vrf-card">
+            <div class="vrf-title">Extra · VRF Data</div>
+
             <div class="vrf-grid">
-            <div>tx pubkey</div>
-            <div class="mono">{{vrf_extra.tx_pubkey}}</div>
+                <div class="label">tx pubkey</div>
+                <div class="mono">{{vrf_extra.tx_pubkey}}</div>
 
-            <div>vrf_proof</div>
-            <div class="mono">{{vrf_extra.vrf_proof}}</div>
+                <div class="label">vrf_proof</div>
+                <div class="mono">{{vrf_extra.vrf_proof}}</div>
 
-            <div>vrf_beta</div>
-            <div class="mono">{{vrf_extra.vrf_beta}}</div>
+                <div class="label">vrf_beta</div>
+                <div class="mono">{{vrf_extra.vrf_beta}}</div>
 
-            <div>vrf_pubkey</div>
-            <div class="mono">{{vrf_extra.vrf_pubkey}}</div>
+                <div class="label">vrf_pubkey</div>
+                <div class="mono">{{vrf_extra.vrf_pubkey}}</div>
 
-            <div>total_votes</div>
-            <div>{{vrf_extra.total_votes}}</div>
+                <div class="label">total_votes</div>
+                <div>{{vrf_extra.total_votes}}</div>
 
-            <div>winning_vote</div>
-            <div>{{vrf_extra.winning_vote}}</div>
+                <div class="label">winning_vote</div>
+                <div>{{vrf_extra.winning_vote}}</div>
 
-            <div>vote_hash</div>
-            <div class="mono">{{vrf_extra.vote_hash}}</div>
+                <div class="label">vote_hash</div>
+                <div class="mono">{{vrf_extra.vote_hash}}</div>
+            </div>
             </div>
         </td>
         </tr>
         {{/has_vrf_extra}}
+
 
 
         </tr>
