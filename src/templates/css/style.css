@@ -212,19 +212,22 @@ form { margin-top: 0; }                       /* ensure no stray gap from forms 
 /* If your table is the first element, keep its header snug */
 table:first-child { margin-top: 0; }
 
-.centered-cell {           /* centers the card within the table cell */
-  text-align: center;
+/* Optional: remove if you don't need the card centered in the cell */
+.centered-cell { text-align: center; }
+
+/* Make the card fill the cell */
+.vrf-card {
+  display: block;        /* was inline-block */
+  width: 100%;           /* new */
+  box-sizing: border-box;/* new: padding counted inside width */
+  text-align: left;
+  /* remove max-width */
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
 }
 
-.vrf-card {                /* the card is centered but its content is left-aligned */
-  display: inline-block;
-  text-align: left;
-  max-width: 700px;
-  padding: 10px 14px;
-  border: 1px solid #e5e7eb;        /* subtle border */
-  border-radius: 8px;
-  background: #fafafa;               /* optional, remove if you want */
-}
 
 .vrf-title {
   text-align: center;
@@ -234,7 +237,7 @@ table:first-child { margin-top: 0; }
 
 .vrf-grid {
   display: grid;
-  grid-template-columns: 160px 1fr;  /* labels | values */
+  grid-template-columns: minmax(160px, 220px) 1fr; /* was 160px 1fr */
   column-gap: 12px;
   row-gap: 6px;
   align-items: start;

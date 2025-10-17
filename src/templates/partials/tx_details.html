@@ -56,11 +56,11 @@
 
         {{#has_vrf_extra}}
         <tr>
-        <td colspan="3" class="field-multiline centered-cell">
-            <div class="vrf-card">
+        <td colspan="3" class="field-multiline">
+            <div class="vrf-card vrf-card--full">
             <div class="vrf-title">Extra · VRF Data</div>
 
-            <div class="vrf-grid">
+            <div class="vrf-grid vrf-grid--wide">
                 <div class="label">tx pubkey</div>
                 <div class="mono">{{vrf_extra.tx_pubkey}}</div>
 
@@ -86,6 +86,7 @@
         </td>
         </tr>
         {{/has_vrf_extra}}
+
 
 
 
