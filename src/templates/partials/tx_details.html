@@ -122,13 +122,13 @@
                     <h4 style="margin: 0px">Check which outputs belong to given XCash address/subaddress and viewkey</h4>
                     <h5 style="margin: 0px">
                         For RingCT transactions, outputs' amounts are also decoded
-                        <br/>
+
                         Note: address/subaddress and viewkey are sent to the server, as the calculations are done on the server side
                     </h5>
                     <form action="/myoutputs" method="post" style="width:100%; margin-top:2px" class="style-1">
-                        <input type="hidden" name="tx_hash" value="{{tx_hash}}"><br/>
-                        <input type="text" name="xmr_address" placeholder="XCash address/subaddress"><br/>
-                        <input type="text" name="viewkey" placeholder="Private viewkey" style="margin-top:5px"><br/>
+                        <input type="hidden" name="tx_hash" value="{{tx_hash}}">
+                        <input type="text" name="xmr_address" placeholder="XCash address/subaddress">
+                        <input type="text" name="viewkey" placeholder="Private viewkey" style="margin-top:5px">
                         <input type="hidden" name="raw_tx_data" value="{{raw_tx_data}}">
                         <!--above raw_tx_data field only used when checking raw tx data through tx pusher-->
                         <input type="submit" value="Decode outputs" style="margin-top:5px" >
@@ -145,15 +145,15 @@
                     <h5 style="margin: 0px">
                         Tx private key can be obtained using <i>get_tx_key</i>
                         command in  <i>xcash-wallet-cli</i> command line tool
-                        <br/>
+
                         Note: address/subaddress and tx private key are sent to the server, as the calculations are done on the server side
                     </h5>
                     <form action="/prove" method="post" style="width:100%;margin-top:2px" class="style-1">
-                       <input type="hidden" name="txhash" value="{{tx_hash}}"><br/>
-                       <input type="text" name="txprvkey" placeholder="Tx private key"><br/>
+                       <input type="hidden" name="txhash" value="{{tx_hash}}">
+                       <input type="text" name="txprvkey" placeholder="Tx private key">
                         <input type="hidden" name="raw_tx_data" value="{{raw_tx_data}}">
                         <!--above raw_tx_data field only used when checking raw tx data through tx pusher-->
-                       <input type="text" name="xmraddress" placeholder="Recipient's xcash address/subaddress" style="margin-top:5px"><br/>
+                       <input type="text" name="xmraddress" placeholder="Recipient's xcash address/subaddress" style="margin-top:5px">
                        <input type="submit" value="Prove sending" style="margin-top:5px">
                     </form>
                 </div>
@@ -332,7 +332,7 @@
                 </code>
             </div>
         </div>
-        <br/><br/>
+
         <h5 style="margin-top:1px"><a href="/tx/{{tx_hash}}">Less details</a></h5>
     {{/with_ring_signatures}}
 {{/have_raw_tx}}
