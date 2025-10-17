@@ -217,9 +217,9 @@ table:first-child { margin-top: 0; }
 
 /* Make the card fill the cell */
 .vrf-card {
-  display: block;        /* was inline-block */
+  display: block;
   width: 97%;
-  box-sizing: border-box;/* new: padding counted inside width */
+  box-sizing: border-box;
   text-align: left;
   padding: 10px 14px;
   border: 1px solid #e5e7eb;

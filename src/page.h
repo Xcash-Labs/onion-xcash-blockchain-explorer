@@ -476,11 +476,6 @@ struct tx_details
           xmreg::vrf07 v;
           const std::string extra_hex = get_extra_str();  // ← use the method, not mstch::get
           bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
-
-        std::cout << "[tx_details] has_vrf_extra=" << (ok?"true":"false")
-          << " len(extra)=" << extra_hex.size() << std::endl;
-
-
           txd_map["has_vrf_extra"] = ok;
           if (ok) {
             txd_map["vrf_extra"] = mstch::map{
@@ -6472,11 +6467,6 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
           xmreg::vrf07 v;
           const std::string extra_hex = txd.get_extra_str();  // ← use the method, not mstch::get
           bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
-
-        std::cout << "[tx_details] has_vrf_extra=" << (ok?"true":"false")
-          << " len(extra)=" << extra_hex.size() << std::endl;
-
-
           context["has_vrf_extra"] = ok;
           if (ok) {
             context["vrf_extra"] = mstch::map{
