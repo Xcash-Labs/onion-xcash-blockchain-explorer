@@ -221,12 +221,11 @@ table:first-child { margin-top: 0; }
   width: 97%;
   box-sizing: border-box;/* new: padding counted inside width */
   text-align: left;
-/*  padding: 10px 14px; */
+  padding: 10px 14px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fafafa;
 }
-
 
 .vrf-title {
   text-align: center;
