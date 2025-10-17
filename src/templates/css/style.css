@@ -211,3 +211,14 @@ form { margin-top: 0; }                       /* ensure no stray gap from forms 
 
 /* If your table is the first element, keep its header snug */
 table:first-child { margin-top: 0; }
+
+.vrf-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: .25rem .75rem;
+  align-items: start;
+}
+.vrf-grid .mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  word-break: break-all;
+}

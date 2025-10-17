@@ -46,23 +46,44 @@
             <td>RingCT/type:  {{#is_ringct}}yes/{{rct_type}}{{/is_ringct}}{{^is_ringct}}no{{/is_ringct}}</td>
         </tr>
 
+        {{^has_vrf_extra}}
+        <tr>
         <td colspan="3" class="field-multiline" style="max-width:700px">
-            <strong>Extra:</strong>
-            {{#has_vrf_extra}}
-            <div style="margin-top:6px">
-                tx pubkey: {{vrf_extra.tx_pubkey}}<br>
-                vrf_proof:<br>{{vrf_extra.vrf_proof}}<br>
-                vrf_beta:<br>{{vrf_extra.vrf_beta}}<br>
-                vrf_pubkey: {{vrf_extra.vrf_pubkey}}<br>
-                total_votes: {{vrf_extra.total_votes}} &nbsp;
-                winning_vote: {{vrf_extra.winning_vote}}<br>
-                vote_hash: {{vrf_extra.vote_hash}}
-            </div>
-            {{/has_vrf_extra}}
-            {{^has_vrf_extra}}
-            {{extra}}
-            {{/has_vrf_extra}}
+            Extra: {{extra}}
         </td>
+        </tr>
+        {{/has_vrf_extra}}
+
+        {{#has_vrf_extra}}
+        <tr>
+        <td colspan="3" class="field-multiline" style="max-width:700px">
+            <div class="vrf-grid">
+            <div>tx pubkey</div>
+            <div class="mono">{{vrf_extra.tx_pubkey}}</div>
+
+            <div>vrf_proof</div>
+            <div class="mono">{{vrf_extra.vrf_proof}}</div>
+
+            <div>vrf_beta</div>
+            <div class="mono">{{vrf_extra.vrf_beta}}</div>
+
+            <div>vrf_pubkey</div>
+            <div class="mono">{{vrf_extra.vrf_pubkey}}</div>
+
+            <div>total_votes</div>
+            <div>{{vrf_extra.total_votes}}</div>
+
+            <div>winning_vote</div>
+            <div>{{vrf_extra.winning_vote}}</div>
+
+            <div>vote_hash</div>
+            <div class="mono">{{vrf_extra.vote_hash}}</div>
+            </div>
+        </td>
+        </tr>
+        {{/has_vrf_extra}}
+
+
         </tr>
 
     </table>
