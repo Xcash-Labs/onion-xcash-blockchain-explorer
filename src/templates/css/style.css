@@ -221,8 +221,7 @@ table:first-child { margin-top: 0; }
   width: 97%;
   box-sizing: border-box;
   text-align: left;
-/*  padding: 10px 14px; */
-  padding: 1px 1px;
+  padding: 0px 14px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fafafa;
@@ -272,6 +271,3 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
 
 /* Ensure the very first child in the cell can't push down */
 td.field-multiline > :first-child { margin-top: 0; }
-
-/* Title: no top margin */
-.vrf-title { margin-top: 0; }
