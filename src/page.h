@@ -476,6 +476,9 @@ struct tx_details
           xmreg::vrf07 v;
           const std::string extra_hex = get_extra_str();  // ← use the method, not mstch::get
           bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
+          
+          std::cerr << "[tx_details] has_vrf_extra=" << (ok?"true":"false")
+          << " len(extra)=" << extra_hex.size() << "\n";
 
           txd_map["has_vrf_extra"] = ok;
           if (ok) {
