@@ -156,7 +156,6 @@ form{ display:inline-block; text-align:center; }
 
 
 .field-multiline{
-/*  white-space: pre-wrap; */ 
   white-space: normal;
   overflow-wrap: anywhere;    /* break very long tokens */
   word-break: break-word;     /* fallback for older engines */
@@ -266,10 +265,10 @@ table:first-child { margin-top: 0; }
 table { border-collapse: collapse; border-spacing: 0; }
 
 /* Tighten the specific cell */
-td.field-multiline { padding-top: 0; padding-bottom: 0; }
+td.field-multiline { padding-top: 7; padding-bottom: 7; }
 
 /* Make sure the card itself doesn't add top margin */
 td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
 
-/* Ensure the very first child in the cell can't push down */
-td.field-multiline > :first-child { margin-top: 0; }
+/* Ensure the very first child in the cell can't push down 
+td.field-multiline > :first-child { margin-top: 0; } */
