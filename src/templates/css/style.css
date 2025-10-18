@@ -305,7 +305,7 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
 }
 
 .tabs .content {
-  position: relative;
+  position: absolute;
   top: 42px;
   left: 0;
   right: 0;
