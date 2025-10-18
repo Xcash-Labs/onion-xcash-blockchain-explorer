@@ -305,11 +305,10 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
 }
 
 .tabs .content {
-  position: absolute;
+  position: relative;
   top: 42px;
   left: 0;
   right: 0;
-  /* bottom: 0;  <-- keep this REMOVED */
   display: none;
   background: var(--panel);
   padding: 18px 18px 22px;    /* extra bottom padding so the border clears the button */
@@ -329,6 +328,7 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
   max-width: 100% !important;
   box-sizing: border-box !important;
   margin-top: 6px !important;
+  position: absolute;
 }
 
 .tabs .content form.style-1 input[type="submit"] {
@@ -348,7 +348,6 @@ form { margin-top: 0; }
 table:first-child { margin-top: 0; }
 .tabs .content form.style-1 {
   text-align: center;
-  display: block;             /* was inline-block: can cause odd shrink/overflow */
+  display: block;
   width: 100%;
-  text-align: left;           /* or center if you prefer */
 }
