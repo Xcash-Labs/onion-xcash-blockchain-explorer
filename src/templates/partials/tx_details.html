@@ -112,7 +112,7 @@
   </div>
 
     {{^have_raw_tx}}
-    <div class="center" style="width:90%">
+    <div class="center" style="width:90%" position="absolute">
         <div class="tabs">
 
             <div class="tab">
@@ -278,28 +278,6 @@
                 {{/enable_mixins_details}}
            </td>
          </tr>
-
-<!--
-        {{#with_ring_signatures}}
-
-          <tr>
-            <td colspan="2">
-                <table style="width:100%; margin-bottom:20px">
-                <tr>
-                  <td>Ring signature</td>
-                </tr>
-                {{#ring_sigs}}
-                <tr>
-                    <td>{{ring_sig}}</td>
-                </tr>
-                {{/ring_sigs}}
-             </table>
-           </td>
-         </tr>
-
-        {{/with_ring_signatures}}
--->
-
       {{/inputs}}
       </table>
 

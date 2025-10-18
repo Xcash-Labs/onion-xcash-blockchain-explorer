@@ -305,7 +305,6 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
 }
 
 .tabs .content {
-  position: relative;
   top: 42px;
   left: 0;
   right: 0;
@@ -328,7 +327,6 @@ td.field-multiline > .vrf-card { margin-top: 0; padding-top: 4px; }
   max-width: 100% !important;
   box-sizing: border-box !important;
   margin-top: 6px !important;
-  position: absolute;
 }
 
 .tabs .content form.style-1 input[type="submit"] {
