@@ -125,7 +125,7 @@ form{ display:inline-block; text-align:center; }
   padding: 16px;
 }
 
-.tabs{ position:relative; clear:both; margin: 25px 0; min-height: 240px; }
+/* .tabs{ position:relative; clear:both; margin: 25px 0; min-height: 240px; } */
 .tab{ float:left; }
 
 .tab label{
@@ -209,7 +209,6 @@ input#toggle-1[type=checkbox]:checked ~ div#decoded-inputs{ display:block; }
 
 h1, h2 { margin-top: 0.25rem; }               /* kill big default top margins */
 form { margin-top: 0; }                       /* ensure no stray gap from forms */
-.tabs { margin-top: 12px; }                   /* optional: bring tabs closer */
 
 /* If your table is the first element, keep its header snug */
 table:first-child { margin-top: 0; }
