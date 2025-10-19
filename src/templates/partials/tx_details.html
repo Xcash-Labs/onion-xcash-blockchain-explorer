@@ -47,11 +47,13 @@
         </tr>
 
         {{^has_vrf_extra}}
+        {{^has_public_extra}}
         <tr>
         <td colspan="3" class="field-multiline" style="max-width:700px">
             Extra: {{extra}}
         </td>
         </tr>
+        {{/has_public_extra}}
         {{/has_vrf_extra}}
 
         {{#has_vrf_extra}}
@@ -98,25 +100,19 @@
                 <div>{{public_extra.version}}</div>
 
                 <div class="label">Sender Spend Pub:</div>
-                <div class="mono">{{public_extra.sender_spend}}</div>
-
-                <div class="label">Tx Pubkey (R):</div>
-                <div class="mono">{{public_extra.tx_pubkey_R}}</div>
+                <div class="mono">{{public_extra.sender_str}}</div>
 
                 <div class="label">Recipient:</div>
-                <div class="mono">{{public_extra.recipient}}</div>
+                <div class="mono">{{public_extra.recipient_str}}</div>
 
                 <div class="label">Output Index:</div>
                 <div>{{public_extra.out_index}}</div>
-
-                <div class="label">Amount (XCA):</div>
-                <div>{{public_extra.amount_xca}}</div>
 
                 <div class="label">Amount (atomic):</div>
                 <div class="mono">{{public_extra.amount_atomic}}</div>
 
                 <div class="label">Signature:</div>
-                <div class="mono">{{public_extra.signature}}</div>
+                <div class="mono">{{public_extra.sig}}</div>
             </div>
             </div>
         </td>

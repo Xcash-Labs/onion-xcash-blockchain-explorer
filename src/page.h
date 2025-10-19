@@ -253,25 +253,18 @@ static inline bool parse_vrf_07_extra_hex(const std::string& extra_hex, vrf07& o
         if (!skip_block(i)) {
             // if it wasn’t length-prefixed (malformed), bail out
             return false;
-        }
+        }6
     }
 
     return false; // never found 0x07
 }
 // ---- end decoder ----
 
-
-
-
-
-
-
 // ---- Public (0xFA) extra decoder — STRICT v1 only ----
 struct public_v1 {
   uint8_t     version{0};         // must be 1
-  std::string sender_spend_pub;   // 32B hex
-  std::string tx_pub_R;           // 32B hex
-  std::string recipient_str;      // Base58
+  std::string recipient_str;      // Base58 (lp: u8 len + bytes)
+  std::string sender_str;         // Base58 (lp: u8 len + bytes)
   uint64_t    out_index{0};       // varint
   uint64_t    amount_atomic{0};   // u64 LE
   std::string sig;                // 64B hex
@@ -288,69 +281,75 @@ static inline bool read_varint_span(const uint8_t*& p, const uint8_t* e, uint64_
   }
   return false;
 }
+
 static inline bool read_u64_le_span(const uint8_t*& p, const uint8_t* e, uint64_t& v) {
   if (e - p < 8) return false;
   uint64_t x = 0; for (int i = 0; i < 8; ++i) x |= (uint64_t)p[i] << (8*i);
   p += 8; v = x; return true;
 }
 
+static inline bool read_lp_str_span(const uint8_t*& p, const uint8_t* e, std::string& out) {
+  if (p >= e) return false;
+  uint8_t n = *p++;
+  if ((size_t)(e - p) < n) return false;
+  out.assign((const char*)p, n);
+  p += n;
+  return true;
+}
+
+// STRICT v1 (new format): version | lp(recipient) | lp(sender) | varint(idx) | u64le(amount) | sig(64B)
 static inline bool parse_public_fa_extra_hex_v1_strict(const std::string& extra_hex, public_v1& out) {
   std::string x; if (!hex_to_bin(extra_hex, x)) return false;
   const uint8_t* p = (const uint8_t*)x.data();
   const uint8_t* e = p + x.size();
 
-  while (p + 2 <= e) {
+  while (p < e) {
+    if (e - p < 1) return false;
     uint8_t tag = *p++;
+
+    // Read varint length for every tag payload (generic, including 0xFA)
+    uint64_t L = 0;
+    if (!read_varint_span(p, e, L)) return false;
+    if ((size_t)(e - p) < L) return false;
+
     if (tag != 0xFA) {
-      // fast-skip common tags
-      if (tag == 0x01) { if (p + 32 > e) return false; p += 32; continue; }        // pubkey
-      if (tag == 0x00) { if (p >= e) return false; uint8_t n=*p++; if (p+n>e) return false; p+=n; continue; } // padding
-      // generic LEB128-sized skip for other tags (e.g., 0x02, 0x07)
-      const uint8_t* t = p; uint64_t L=0; int s=0; bool ok=false;
-      while (t < e && s < 70) { uint8_t c=*t++; L |= (uint64_t)(c&0x7F) << s; if (!(c&0x80)){ok=true;break;} s+=7; }
-      if (!ok || (size_t)(e - t) < L) return false; p = t + L; continue;
+      // Skip unknown/non-public tags
+      p += L;
+      continue;
     }
 
-    // found 0xFA
-    if (p >= e) return false;
-    uint8_t len = *p++;
-    if ((size_t)(e - p) < len) return false;
-
+    // found 0xFA — parse payload
     const uint8_t* q  = p;
-    const uint8_t* qe = p + len;
+    const uint8_t* qe = p + L;
 
     // STRICT: first byte must be version 1
-    if (q >= qe || *q != 1) return false;
-    out.version = *q++; // == 1
-
-    if (qe - q < 32) return false; out.sender_spend_pub = bin_to_hex(std::string((const char*)q,32)); q+=32;
-    if (qe - q < 32) return false; out.tx_pub_R        = bin_to_hex(std::string((const char*)q,32)); q+=32;
-
     if (q >= qe) return false;
-    uint8_t rlen = *q++;
-    if ((size_t)(qe - q) < rlen) return false;
-    out.recipient_str.assign((const char*)q, rlen); q += rlen;
+    out.version = *q++;
+    if (out.version != 1) return false;
 
-    if (qe - q < 64) return false; out.sig = bin_to_hex(std::string((const char*)q,64)); q+=64;
+    // recipient (lp)
+    if (!read_lp_str_span(q, qe, out.recipient_str)) return false;
 
+    // sender (lp)
+    if (!read_lp_str_span(q, qe, out.sender_str)) return false;
+
+    // index (varint)
     if (!read_varint_span(q, qe, out.out_index)) return false;
+
+    // amount (u64 LE)
     if (!read_u64_le_span(q, qe, out.amount_atomic)) return false;
+
+    // sig (64B)
+    if ((size_t)(qe - q) != 64) return false; // must be exactly 64 bytes remaining
+    out.sig = bin_to_hex(std::string((const char*)q, 64));
+    q += 64;
 
     return q == qe; // parsed exactly
   }
+
   return false; // no 0xFA found
 }
 // ---- end STRICT decoder ----
-
-
-
-
-
-
-
-
-
-
 
 using namespace cryptonote;
 using namespace crypto;
