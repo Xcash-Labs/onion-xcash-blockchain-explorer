@@ -584,7 +584,7 @@ struct tx_details
         // Parse Public (0xFA) and expose to the template
         {
           xmreg::public_v1 p;
-          F bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
+          bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
           txd_map["has_public_extra"] = ok;
 
           if (ok) {
