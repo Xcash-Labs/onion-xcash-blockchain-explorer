@@ -253,7 +253,7 @@ static inline bool parse_vrf_07_extra_hex(const std::string& extra_hex, vrf07& o
         if (!skip_block(i)) {
             // if it wasn’t length-prefixed (malformed), bail out
             return false;
-        }6
+        }
     }
 
     return false; // never found 0x07
