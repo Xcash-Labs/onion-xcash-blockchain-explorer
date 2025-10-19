@@ -260,6 +260,98 @@ static inline bool parse_vrf_07_extra_hex(const std::string& extra_hex, vrf07& o
 }
 // ---- end decoder ----
 
+
+
+
+
+
+
+// ---- Public (0xFA) extra decoder — STRICT v1 only ----
+struct public_v1 {
+  uint8_t     version{0};         // must be 1
+  std::string sender_spend_pub;   // 32B hex
+  std::string tx_pub_R;           // 32B hex
+  std::string recipient_str;      // Base58
+  uint64_t    out_index{0};       // varint
+  uint64_t    amount_atomic{0};   // u64 LE
+  std::string sig;                // 64B hex
+};
+
+// helpers: hex_to_bin, bin_to_hex from your VRF code
+static inline bool read_varint_span(const uint8_t*& p, const uint8_t* e, uint64_t& v) {
+  v = 0; int s = 0;
+  while (p < e && s < 70) {
+    uint8_t c = *p++;
+    v |= (uint64_t)(c & 0x7F) << s;
+    if (!(c & 0x80)) return true;
+    s += 7;
+  }
+  return false;
+}
+static inline bool read_u64_le_span(const uint8_t*& p, const uint8_t* e, uint64_t& v) {
+  if (e - p < 8) return false;
+  uint64_t x = 0; for (int i = 0; i < 8; ++i) x |= (uint64_t)p[i] << (8*i);
+  p += 8; v = x; return true;
+}
+
+static inline bool parse_public_fa_extra_hex_v1_strict(const std::string& extra_hex, public_v1& out) {
+  std::string x; if (!hex_to_bin(extra_hex, x)) return false;
+  const uint8_t* p = (const uint8_t*)x.data();
+  const uint8_t* e = p + x.size();
+
+  while (p + 2 <= e) {
+    uint8_t tag = *p++;
+    if (tag != 0xFA) {
+      // fast-skip common tags
+      if (tag == 0x01) { if (p + 32 > e) return false; p += 32; continue; }        // pubkey
+      if (tag == 0x00) { if (p >= e) return false; uint8_t n=*p++; if (p+n>e) return false; p+=n; continue; } // padding
+      // generic LEB128-sized skip for other tags (e.g., 0x02, 0x07)
+      const uint8_t* t = p; uint64_t L=0; int s=0; bool ok=false;
+      while (t < e && s < 70) { uint8_t c=*t++; L |= (uint64_t)(c&0x7F) << s; if (!(c&0x80)){ok=true;break;} s+=7; }
+      if (!ok || (size_t)(e - t) < L) return false; p = t + L; continue;
+    }
+
+    // found 0xFA
+    if (p >= e) return false;
+    uint8_t len = *p++;
+    if ((size_t)(e - p) < len) return false;
+
+    const uint8_t* q  = p;
+    const uint8_t* qe = p + len;
+
+    // STRICT: first byte must be version 1
+    if (q >= qe || *q != 1) return false;
+    out.version = *q++; // == 1
+
+    if (qe - q < 32) return false; out.sender_spend_pub = bin_to_hex(std::string((const char*)q,32)); q+=32;
+    if (qe - q < 32) return false; out.tx_pub_R        = bin_to_hex(std::string((const char*)q,32)); q+=32;
+
+    if (q >= qe) return false;
+    uint8_t rlen = *q++;
+    if ((size_t)(qe - q) < rlen) return false;
+    out.recipient_str.assign((const char*)q, rlen); q += rlen;
+
+    if (qe - q < 64) return false; out.sig = bin_to_hex(std::string((const char*)q,64)); q+=64;
+
+    if (!read_varint_span(q, qe, out.out_index)) return false;
+    if (!read_u64_le_span(q, qe, out.amount_atomic)) return false;
+
+    return q == qe; // parsed exactly
+  }
+  return false; // no 0xFA found
+}
+// ---- end STRICT decoder ----
+
+
+
+
+
+
+
+
+
+
+
 using namespace cryptonote;
 using namespace crypto;
 using namespace std;
@@ -439,44 +531,44 @@ struct tx_details
             payed_for_kB_micro_str = fmt::format("{:04.0f}", payed_for_kB * 1e6);
         }
 
+        const std::string extra_hex = get_extra_str();
 
-        mstch::map txd_map {
-                {"hash"              , pod_to_hex(hash)},
-                {"prefix_hash"       , pod_to_hex(prefix_hash)},
-                {"pub_key"           , pod_to_hex(pk)},
-                {"tx_fee"            , fee_str},
-                {"tx_fee_short"      , fee_short_str},
-                {"fee_micro"         , fee_micro_str},
-                {"payed_for_kB"      , payed_for_kB_str},
+            mstch::map txd_map{
+                {"hash", pod_to_hex(hash)},
+                {"prefix_hash", pod_to_hex(prefix_hash)},
+                {"pub_key", pod_to_hex(pk)},
+                {"tx_fee", fee_str},
+                {"tx_fee_short", fee_short_str},
+                {"fee_micro", fee_micro_str},
+                {"payed_for_kB", payed_for_kB_str},
                 {"payed_for_kB_micro", payed_for_kB_micro_str},
-                {"sum_inputs"        , xmr_amount_to_str(xmr_inputs , "{:0.6f}")},
-                {"sum_outputs"       , xmr_amount_to_str(xmr_outputs, "{:0.6f}")},
-                {"sum_inputs_short"  , xmr_amount_to_str(xmr_inputs , "{:0.3f}")},
-                {"sum_outputs_short" , xmr_amount_to_str(xmr_outputs, "{:0.3f}")},
-                {"no_inputs"         , static_cast<uint64_t>(input_key_imgs.size())},
-                {"no_outputs"        , static_cast<uint64_t>(output_pub_keys.size())},
-                {"no_nonrct_inputs"  , num_nonrct_inputs},
-                {"mixin"             , mixin_str},
-                {"blk_height"        , blk_height},
-                {"version"           , static_cast<uint64_t>(version)},
-                {"has_payment_id"    , payment_id  != null_hash},
-                {"has_payment_id8"   , payment_id8 != null_hash8},
-                {"payment_id"        , pod_to_hex(payment_id)},
-                {"confirmations"     , no_confirmations},
-                {"extra"             , get_extra_str()},
-                {"payment_id8"       , pod_to_hex(payment_id8)},
-                {"unlock_time"       , unlock_time},
-                {"tx_size"           , fmt::format("{:0.4f}", tx_size)},
-                {"tx_size_short"     , fmt::format("{:0.2f}", tx_size)},
-                {"has_add_pks"       , !additional_pks.empty()}
-        };
+                {"sum_inputs", xmr_amount_to_str(xmr_inputs, "{:0.6f}")},
+                {"sum_outputs", xmr_amount_to_str(xmr_outputs, "{:0.6f}")},
+                {"sum_inputs_short", xmr_amount_to_str(xmr_inputs, "{:0.3f}")},
+                {"sum_outputs_short", xmr_amount_to_str(xmr_outputs, "{:0.3f}")},
+                {"no_inputs", static_cast<uint64_t>(input_key_imgs.size())},
+                {"no_outputs", static_cast<uint64_t>(output_pub_keys.size())},
+                {"no_nonrct_inputs", num_nonrct_inputs},
+                {"mixin", mixin_str},
+                {"blk_height", blk_height},
+                {"version", static_cast<uint64_t>(version)},
+                {"has_payment_id", payment_id != null_hash},
+                {"has_payment_id8", payment_id8 != null_hash8},
+                {"payment_id", pod_to_hex(payment_id)},
+                {"confirmations", no_confirmations},
+                {"extra", extra_hex},
+                {"payment_id8", pod_to_hex(payment_id8)},
+                {"unlock_time", unlock_time},
+                {"tx_size", fmt::format("{:0.4f}", tx_size)},
+                {"tx_size_short", fmt::format("{:0.2f}", tx_size)},
+                {"has_add_pks", !additional_pks.empty()}};
 
-        // Parse VRF 0x07 and expose to the template jed 1
+        // Parse VRF 0x07 and expose to the template
         {
           xmreg::vrf07 v;
-          const std::string extra_hex = get_extra_str();  // ← use the method, not mstch::get
           bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
           txd_map["has_vrf_extra"] = ok;
+
           if (ok) {
             txd_map["vrf_extra"] = mstch::map{
                 {"tx_pubkey", v.tx_pubkey},
@@ -486,6 +578,35 @@ struct tx_details
                 {"total_votes", static_cast<uint64_t>(v.total_votes)},
                 {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
                 {"vote_hash", v.vote_hash}};
+          }
+        }
+
+        // Parse Public (0xFA) and expose to the template
+        {
+          xmreg::public_v1 p;
+          F bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
+          txd_map["has_public_extra"] = ok;
+
+          if (ok) {
+            // Convert atomic → XCA string with 6 decimals (adjust if your coin has different precision)
+            auto to_xca = [](uint64_t atomic) -> std::string {
+              uint64_t whole = atomic / 1'000'000ULL;
+              uint64_t frac = atomic % 1'000'000ULL;
+              std::ostringstream oss;
+              oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
+              return oss.str();
+            };
+
+            txd_map["public_extra"] = mstch::map{
+                {"version", static_cast<uint64_t>(p.version)},  // 1
+                {"sender_spend", p.sender_spend_pub},
+                {"tx_pubkey_R", p.tx_pub_R},
+                {"recipient", p.recipient_str},
+                {"out_index", static_cast<uint64_t>(p.out_index)},
+                {"amount_xca", to_xca(p.amount_atomic)},
+                {"amount_atomic", p.amount_atomic},
+                {"signature", p.sig},
+            };
           }
         }
 
@@ -6244,51 +6365,76 @@ json
 get_tx_json(const transaction& tx, const tx_details& txd)
 {
 
-    json j_tx {
-            {"tx_hash"     , pod_to_hex(txd.hash)},
-            {"tx_fee"      , txd.fee},
-            {"mixin"       , txd.mixin_no},
-            {"tx_size"     , txd.size},
-            {"xmr_outputs" , txd.xmr_outputs},
-            {"xmr_inputs"  , txd.xmr_inputs},
-            {"unlock_time" , txd.unlock_time},
-            {"tx_version"  , static_cast<uint64_t>(txd.version)},
-            {"rct_type"    , tx.rct_signatures.type},
-            {"coinbase"    , is_coinbase(tx)},
-            {"mixin"       , txd.mixin_no},
-            {"extra"       , txd.get_extra_str()},
-            {"payment_id"  , (txd.payment_id  != null_hash  ? pod_to_hex(txd.payment_id)  : "")},
-            {"payment_id8" , (txd.payment_id8 != null_hash8 ? pod_to_hex(txd.payment_id8) : "")},
-    };
+  const std::string extra_hex = txd.get_extra_str();
 
-    // --- Parse VRF 0x07 and add to JSON ---
-    {
-        xmreg::vrf07 v;
-        const std::string extra_hex = txd.get_extra_str();
-        const bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
+  json j_tx{
+      {"tx_hash", pod_to_hex(txd.hash)},
+      {"tx_fee", txd.fee},
+      {"mixin", txd.mixin_no},
+      {"tx_size", txd.size},
+      {"xmr_outputs", txd.xmr_outputs},
+      {"xmr_inputs", txd.xmr_inputs},
+      {"unlock_time", txd.unlock_time},
+      {"tx_version", static_cast<uint64_t>(txd.version)},
+      {"rct_type", tx.rct_signatures.type},
+      {"coinbase", is_coinbase(tx)},
+      {"mixin", txd.mixin_no},
+      {"extra", extra_hex},
+      {"payment_id", (txd.payment_id != null_hash ? pod_to_hex(txd.payment_id) : "")},
+      {"payment_id8", (txd.payment_id8 != null_hash8 ? pod_to_hex(txd.payment_id8) : "")},
+  };
 
-        j_tx["has_vrf_extra"] = ok;
+  // --- Parse VRF 0x07 and add to JSON ---
+  {
+    xmreg::vrf07 v;
+    const bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
+    j_tx["has_vrf_extra"] = ok;
 
-        if (ok) {
-            j_tx["vrf_extra"] = {
-                {"tx_pubkey",     v.tx_pubkey},
-                {"vrf_proof",     v.vrf_proof},
-                {"vrf_beta",      v.vrf_beta},
-                {"vrf_pubkey",    v.vrf_pubkey},
-                {"total_votes",   static_cast<uint64_t>(v.total_votes)},
-                {"winning_vote",  static_cast<uint64_t>(v.winning_vote)},
-                {"vote_hash",     v.vote_hash}
-            };
-        } else {
-            // optional: include debug breadcrumbs (remove later)
-            j_tx["vrf_extra"] = nullptr;
-            j_tx["extra_len"] = static_cast<uint64_t>(extra_hex.size());
-            if (!extra_hex.empty())
-                j_tx["extra_preview"] = extra_hex.substr(0, 96);
-        }
+    if (ok) {
+      j_tx["vrf_extra"] = {
+          {"tx_pubkey", v.tx_pubkey},
+          {"vrf_proof", v.vrf_proof},
+          {"vrf_beta", v.vrf_beta},
+          {"vrf_pubkey", v.vrf_pubkey},
+          {"total_votes", static_cast<uint64_t>(v.total_votes)},
+          {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
+          {"vote_hash", v.vote_hash}};
+    } else {
+      j_tx["vrf_extra"] = nullptr;
     }
+  }
 
-    return j_tx;
+  // --- Parse Public (0xFA) and add to JSON ---
+  {
+    xmreg::public_v1 p;
+    const bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
+    j_tx["has_public_extra"] = ok;
+
+    if (ok) {
+      // atomic -> XCA with 6 decimals
+      auto to_xca = [](uint64_t atomic) -> std::string {
+        uint64_t whole = atomic / 1'000'000ULL;
+        uint64_t frac = atomic % 1'000'000ULL;
+        std::ostringstream oss;
+        oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
+        return oss.str();
+      };
+
+      j_tx["public_extra"] = {
+          {"version", static_cast<uint64_t>(p.version)},  // 1
+          {"sender_spend", p.sender_spend_pub},
+          {"tx_pubkey_R", p.tx_pub_R},
+          {"recipient", p.recipient_str},
+          {"out_index", static_cast<uint64_t>(p.out_index)},
+          {"amount_xca", to_xca(p.amount_atomic)},
+          {"amount_atomic", p.amount_atomic},
+          {"signature", p.sig}};
+    } else {
+      j_tx["public_extra"] = nullptr;
+    }
+  }
+
+  return j_tx;
 }
 
 
@@ -6416,13 +6562,10 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
     // payments id. both normal and encrypted (payment_id8)
     string pid_str   = pod_to_hex(txd.payment_id);
     string pid8_str  = pod_to_hex(txd.payment_id8);
-
-
     string tx_json = obj_to_json_str(tx);
-
     double tx_size = static_cast<double>(txd.size) / 1024.0;
-
     double payed_for_kB = XMR_AMOUNT(txd.fee) / tx_size;
+    const std::string extra_hex = txd.get_extra_str();
 
     // initalise page tempate map with basic info about blockchain
     mstch::map context {
@@ -6449,9 +6592,8 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
             {"confirmations"         , txd.no_confirmations},
             {"payment_id"            , pid_str},
             {"payment_id8"           , pid8_str},
-            {"extra"                 , txd.get_extra_str()},
-            {"with_ring_signatures"  , static_cast<bool>(
-                                               with_ring_signatures)},
+            {"extra"                 , extra_hex},
+            {"with_ring_signatures"  , static_cast<bool>(with_ring_signatures)},
             {"tx_json"               , tx_json},
             {"is_ringct"             , (tx.version > 1)},
             {"rct_type"              , tx.rct_signatures.type},
@@ -6462,10 +6604,9 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
             {"construction_time"     , string {}},
     };
 
-            // Parse VRF 0x07 and expose to the template jed 2
+        // Parse VRF 0x07 and expose to the template
         {
           xmreg::vrf07 v;
-          const std::string extra_hex = txd.get_extra_str();  // ← use the method, not mstch::get
           bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
           context["has_vrf_extra"] = ok;
           if (ok) {
@@ -6477,6 +6618,35 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
                 {"total_votes", static_cast<uint64_t>(v.total_votes)},
                 {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
                 {"vote_hash", v.vote_hash}};
+          }
+        }
+
+        // Parse Public (0xFA) and expose to the template
+        {
+          xmreg::public_v1 p;
+          bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
+          context["has_public_extra"] = ok;
+
+          if (ok) {
+            // Convert atomic → XCA string with 6 decimals (adjust if your coin has different precision)
+            auto to_xca = [](uint64_t atomic) -> std::string {
+              uint64_t whole = atomic / 1'000'000ULL;
+              uint64_t frac = atomic % 1'000'000ULL;
+              std::ostringstream oss;
+              oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
+              return oss.str();
+            };
+
+            context["public_extra"] = mstch::map{
+                {"version", static_cast<uint64_t>(p.version)},  // 1
+                {"sender_spend", p.sender_spend_pub},
+                {"tx_pubkey_R", p.tx_pub_R},
+                {"recipient", p.recipient_str},
+                {"out_index", static_cast<uint64_t>(p.out_index)},
+                {"amount_xca", to_xca(p.amount_atomic)},
+                {"amount_atomic", p.amount_atomic},
+                {"signature", p.sig},
+            };
           }
         }
 
