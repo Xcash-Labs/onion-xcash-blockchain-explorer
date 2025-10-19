@@ -6374,7 +6374,36 @@ get_tx_json(const transaction& tx, const tx_details& txd)
     }
   }
 
+  // --- Parse Public (0xFA) and add to JSON ---
+  {
+    xmreg::public_v1 p;
+    const bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
+    j_tx["has_public_extra"] = ok;
 
+    if (ok) {
+      // atomic -> XCA with 6 decimals
+      auto to_xca = [](uint64_t atomic) -> std::string {
+        uint64_t whole = atomic / 1'000'000ULL;
+        uint64_t frac = atomic % 1'000'000ULL;
+        std::ostringstream oss;
+        oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
+        return oss.str();
+      };
+
+      j_tx["public_extra"] = {
+        {"version",        static_cast<uint64_t>(p.version)},     // 1
+        {"sender_str",     p.sender_str},                         // Base58
+        {"recipient_str",  p.recipient_str},                      // Base58
+        {"out_index",      static_cast<uint64_t>(p.out_index)},
+        {"amount_xca",     to_xca(p.amount_atomic)},              // preformatted XCA string
+        {"amount_atomic",  p.amount_atomic},                      // uint64_t
+        {"sig",            p.sig},                                // 64B hex
+        {"sig_ok",         sig_ok},                               // bool -> {{#public_extra.sig_ok}}…{{/…}}
+        {"self_transfer",  self_transfer}                         // bool -> optional UI note
+    } else {
+      j_tx["public_extra"] = nullptr;
+    }  
+  }
 
   return j_tx;
 }
