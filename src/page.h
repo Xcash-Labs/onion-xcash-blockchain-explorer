@@ -636,6 +636,46 @@ struct tx_details
           }
         }
 
+        // Parse Public (0xFA) and expose to the template
+        {
+          xmreg::public_v1 p;
+          const bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
+          txd_map["has_public_extra"] = ok;
+
+          if (ok) {
+            // Convert atomic → XCA string with 6 decimals
+            auto to_xca = [](uint64_t atomic) -> std::string {
+              uint64_t whole = atomic / 1'000'000ULL;
+              uint64_t frac = atomic % 1'000'000ULL;
+              std::ostringstream oss;
+              oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
+              return oss.str();
+            };
+
+            // Flags for UI
+            const bool self_transfer = (p.sender_str == p.recipient_str);
+
+            bool sig_ok = false;  // set true if you verify below
+            // If you have the tx pubkey R available, you can verify the signature:
+            // crypto::public_key R_from_tx{};
+            // if (extract_tx_pubkey_from_extra(extra_bytes, R_from_tx)) {
+            //   sig_ok = verify_public_tx_v1(p, R_from_tx);
+            // }
+
+            txd_map["public_extra"] = mstch::map{
+                {"version", static_cast<uint64_t>(p.version)},  // 1
+                {"sender_str", p.sender_str},                   // Base58
+                {"recipient_str", p.recipient_str},             // Base58
+                {"out_index", static_cast<uint64_t>(p.out_index)},
+                {"amount_xca", to_xca(p.amount_atomic)},  // preformatted XCA
+                {"amount_atomic", p.amount_atomic},       // uint64_t
+                {"sig", p.sig},                           // 64B hex
+                {"sig_ok", sig_ok},                       // bool
+                {"self_transfer", self_transfer}          // bool
+            };
+          }
+        }
+
         return txd_map;
     }
 
@@ -6446,24 +6486,33 @@ get_tx_json(const transaction& tx, const tx_details& txd)
         return oss.str();
       };
 
+      // define these before use
+      bool self_transfer = (p.sender_str == p.recipient_str);
+      bool sig_ok = false;  // TODO: set via verify_public_tx_v1(p, R_from_tx)
+      // If you have the tx pubkey R in scope, you can enable this:
+      // crypto::public_key R_from_tx{};
+      // if (extract_tx_pubkey_from_extra(extra_bytes, R_from_tx)) {
+      //   sig_ok = verify_public_tx_v1(p, R_from_tx);
+      // }
+
       j_tx["public_extra"] = {
-        {"version",        static_cast<uint64_t>(p.version)},     // 1
-        {"sender_str",     p.sender_str},                         // Base58
-        {"recipient_str",  p.recipient_str},                      // Base58
-        {"out_index",      static_cast<uint64_t>(p.out_index)},
-        {"amount_xca",     to_xca(p.amount_atomic)},              // preformatted XCA string
-        {"amount_atomic",  p.amount_atomic},                      // uint64_t
-        {"sig",            p.sig},                                // 64B hex
-        {"sig_ok",         sig_ok},                               // bool -> {{#public_extra.sig_ok}}…{{/…}}
-        {"self_transfer",  self_transfer}                         // bool -> optional UI note
+          {"version", static_cast<uint64_t>(p.version)},  // 1
+          {"sender_str", p.sender_str},                   // Base58
+          {"recipient_str", p.recipient_str},             // Base58
+          {"out_index", static_cast<uint64_t>(p.out_index)},
+          {"amount_xca", to_xca(p.amount_atomic)},  // preformatted XCA string
+          {"amount_atomic", p.amount_atomic},       // uint64_t
+          {"sig", p.sig},                           // 64B hex
+          {"sig_ok", sig_ok},                       // bool -> {{#public_extra.sig_ok}}…{{/…}}
+          {"self_transfer", self_transfer}          // bool -> optional UI note
+      };
     } else {
       j_tx["public_extra"] = nullptr;
-    }  
+    }
   }
 
   return j_tx;
 }
-
 
 bool
 find_tx(const crypto::hash& tx_hash,
@@ -6645,6 +6694,46 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
                 {"total_votes", static_cast<uint64_t>(v.total_votes)},
                 {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
                 {"vote_hash", v.vote_hash}};
+          }
+        }
+
+        // Parse Public (0xFA) and expose to the template
+        {
+          xmreg::public_v1 p;
+          const bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
+          context["has_public_extra"] = ok;
+
+          if (ok) {
+            // atomic → XCA with 6 decimals
+            auto to_xca = [](uint64_t atomic) -> std::string {
+              uint64_t whole = atomic / 1'000'000ULL;
+              uint64_t frac = atomic % 1'000'000ULL;
+              std::ostringstream oss;
+              oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
+              return oss.str();
+            };
+
+            // Flags for UI
+            const bool self_transfer = (p.sender_str == p.recipient_str);
+
+            bool sig_ok = false;  // TODO: set via verify_public_tx_v1(p, R_from_tx)
+            // If you have R_from_tx in scope, you can enable:
+            // crypto::public_key R_from_tx{};
+            // if (extract_tx_pubkey_from_extra(extra_bytes, R_from_tx)) {
+            //   sig_ok = verify_public_tx_v1(p, R_from_tx);
+            // }
+
+            context["public_extra"] = mstch::map{
+                {"version", static_cast<uint64_t>(p.version)},  // 1
+                {"sender_str", p.sender_str},                   // Base58
+                {"recipient_str", p.recipient_str},             // Base58
+                {"out_index", static_cast<uint64_t>(p.out_index)},
+                {"amount_xca", to_xca(p.amount_atomic)},  // preformatted XCA
+                {"amount_atomic", p.amount_atomic},       // uint64_t
+                {"sig", p.sig},                           // 64B hex
+                {"sig_ok", sig_ok},                       // bool
+                {"self_transfer", self_transfer}          // bool
+            };
           }
         }
 
