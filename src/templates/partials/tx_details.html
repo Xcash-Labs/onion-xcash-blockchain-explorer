@@ -89,45 +89,7 @@
         </tr>
         {{/has_vrf_extra}}
 
-        {{#has_public_extra}}
-        <tr>
-        <td colspan="3" class="field-multiline">
-            <div class="vrf-card">
-            <div class="vrf-title">Extra · Public Transfer (0xFA)</div>
 
-            <div class="vrf-grid">
-                <div class="label">Version:</div>
-                <div>{{public_extra.version}}</div>
-
-                <div class="label">Sender:</div>
-                <div class="mono">
-                {{public_extra.sender_str}}
-                {{#public_extra.self_transfer}}<span class="note"> (self-transfer)</span>{{/public_extra.self_transfer}}
-                </div>
-
-                <div class="label">Recipient:</div>
-                <div class="mono">{{public_extra.recipient_str}}</div>
-
-                <div class="label">Output Index:</div>
-                <div>{{public_extra.out_index}}</div>
-
-                <div class="label">Amount (XCA):</div>
-                <div>
-                {{public_extra.amount_xca}}
-                {{#public_extra.sig_ok}}<span class="ok">✅ verified</span>{{/public_extra.sig_ok}}
-                {{^public_extra.sig_ok}}<span class="warn">⚠️ unverifiable</span>{{/public_extra.sig_ok}}
-                </div>
-
-                <div class="label">Amount (atomic):</div>
-                <div class="mono">{{public_extra.amount_atomic}}</div>
-
-                <div class="label">Signature (64B):</div>
-                <div class="mono">{{public_extra.sig}}</div>
-            </div>
-            </div>
-        </td>
-        </tr>
-        {{/has_public_extra}}
 
 
         </tr>
