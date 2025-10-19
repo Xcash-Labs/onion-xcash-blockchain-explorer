@@ -595,16 +595,16 @@ struct tx_details
               oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
               return oss.str();
             };
-
             txd_map["public_extra"] = mstch::map{
-                {"version", static_cast<uint64_t>(p.version)},  // 1
-                {"sender_spend", p.sender_spend_pub},
-                {"tx_pubkey_R", p.tx_pub_R},
-                {"recipient", p.recipient_str},
-                {"out_index", static_cast<uint64_t>(p.out_index)},
-                {"amount_xca", to_xca(p.amount_atomic)},
-                {"amount_atomic", p.amount_atomic},
-                {"signature", p.sig},
+                {"version",        static_cast<uint64_t>(p.version)},     // 1
+                {"sender_str",     p.sender_str},                         // Base58
+                {"recipient_str",  p.recipient_str},                      // Base58
+                {"out_index",      static_cast<uint64_t>(p.out_index)},
+                {"amount_xca",     to_xca(p.amount_atomic)},              // preformatted XCA string
+                {"amount_atomic",  p.amount_atomic},                      // uint64_t
+                {"sig",            p.sig},                                // 64B hex
+                {"sig_ok",         sig_ok},                               // bool -> {{#public_extra.sig_ok}}…{{/…}}
+                {"self_transfer",  self_transfer}                         // bool -> optional UI note
             };
           }
         }
@@ -6420,14 +6420,15 @@ get_tx_json(const transaction& tx, const tx_details& txd)
       };
 
       j_tx["public_extra"] = {
-          {"version", static_cast<uint64_t>(p.version)},  // 1
-          {"sender_spend", p.sender_spend_pub},
-          {"tx_pubkey_R", p.tx_pub_R},
-          {"recipient", p.recipient_str},
-          {"out_index", static_cast<uint64_t>(p.out_index)},
-          {"amount_xca", to_xca(p.amount_atomic)},
-          {"amount_atomic", p.amount_atomic},
-          {"signature", p.sig}};
+        {"version",        static_cast<uint64_t>(p.version)},     // 1
+        {"sender_str",     p.sender_str},                         // Base58
+        {"recipient_str",  p.recipient_str},                      // Base58
+        {"out_index",      static_cast<uint64_t>(p.out_index)},
+        {"amount_xca",     to_xca(p.amount_atomic)},              // preformatted XCA string
+        {"amount_atomic",  p.amount_atomic},                      // uint64_t
+        {"sig",            p.sig},                                // 64B hex
+        {"sig_ok",         sig_ok},                               // bool -> {{#public_extra.sig_ok}}…{{/…}}
+        {"self_transfer",  self_transfer}                         // bool -> optional UI note
     } else {
       j_tx["public_extra"] = nullptr;
     }
@@ -6637,14 +6638,15 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
             };
 
             context["public_extra"] = mstch::map{
-                {"version", static_cast<uint64_t>(p.version)},  // 1
-                {"sender_spend", p.sender_spend_pub},
-                {"tx_pubkey_R", p.tx_pub_R},
-                {"recipient", p.recipient_str},
-                {"out_index", static_cast<uint64_t>(p.out_index)},
-                {"amount_xca", to_xca(p.amount_atomic)},
-                {"amount_atomic", p.amount_atomic},
-                {"signature", p.sig},
+                {"version",        static_cast<uint64_t>(p.version)},     // 1
+                {"sender_str",     p.sender_str},                         // Base58
+                {"recipient_str",  p.recipient_str},                      // Base58
+                {"out_index",      static_cast<uint64_t>(p.out_index)},
+                {"amount_xca",     to_xca(p.amount_atomic)},              // preformatted XCA string
+                {"amount_atomic",  p.amount_atomic},                      // uint64_t
+                {"sig",            p.sig},                                // 64B hex
+                {"sig_ok",         sig_ok},                               // bool -> {{#public_extra.sig_ok}}…{{/…}}
+                {"self_transfer",  self_transfer}                         // bool -> optional UI note
             };
           }
         }
