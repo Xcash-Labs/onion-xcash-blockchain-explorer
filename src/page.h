@@ -260,7 +260,7 @@ static inline bool parse_vrf_07_extra_hex(const std::string& extra_hex, vrf07& o
 }
 // ---- end decoder ----
 
-// ---- Public (0xFA) extra decoder — STRICT v1 only ----
+// ---- Public (0xFA) extra decoder
 struct public_v1 {
   uint8_t     version{0};         // must be 1
   std::string recipient_str;      // Base58 (lp: u8 len + bytes)
@@ -297,7 +297,40 @@ static inline bool read_lp_str_span(const uint8_t*& p, const uint8_t* e, std::st
   return true;
 }
 
-// STRICT v1 (new format): version | lp(recipient) | lp(sender) | varint(idx) | u64le(amount) | sig(64B)
+// ---- Public (0xFA) extra decoder — STRICT v1 (NEW layout) ----
+struct public_v1 {
+  uint8_t     version{0};         // must be 1
+  std::string recipient_str;      // Base58 (lp: u8 len + bytes)
+  std::string sender_str;         // Base58 (lp: u8 len + bytes)
+  uint64_t    out_index{0};       // varint
+  uint64_t    amount_atomic{0};   // u64 LE
+  std::string sig;                // 64B hex
+};
+
+static inline bool read_varint_span(const uint8_t*& p, const uint8_t* e, uint64_t& v) {
+  v = 0; int s = 0;
+  while (p < e && s < 70) {
+    uint8_t c = *p++;
+    v |= (uint64_t)(c & 0x7F) << s;
+    if (!(c & 0x80)) return true;
+    s += 7;
+  }
+  return false;
+}
+static inline bool read_u64_le_span(const uint8_t*& p, const uint8_t* e, uint64_t& v) {
+  if (e - p < 8) return false;
+  uint64_t x = 0; for (int i = 0; i < 8; ++i) x |= (uint64_t)p[i] << (8*i);
+  p += 8; v = x; return true;
+}
+static inline bool read_lp_str_span(const uint8_t*& p, const uint8_t* e, std::string& out) {
+  if (p >= e) return false;
+  uint8_t n = *p++;
+  if ((size_t)(e - p) < n) return false;
+  out.assign((const char*)p, n); p += n;
+  return true;
+}
+
+// STRICT v1 payload: version | lp(recipient) | lp(sender) | varint(idx) | u64le(amount) | sig(64B)
 static inline bool parse_public_fa_extra_hex_v1_strict(const std::string& extra_hex, public_v1& out) {
   std::string x; if (!hex_to_bin(extra_hex, x)) return false;
   const uint8_t* p = (const uint8_t*)x.data();
@@ -307,49 +340,72 @@ static inline bool parse_public_fa_extra_hex_v1_strict(const std::string& extra_
     if (e - p < 1) return false;
     uint8_t tag = *p++;
 
-    // Read varint length for every tag payload (generic, including 0xFA)
-    uint64_t L = 0;
-    if (!read_varint_span(p, e, L)) return false;
-    if ((size_t)(e - p) < L) return false;
+    switch (tag) {
+      case 0xFA: { // --- our Public TX tag, uses VARINT length ---
+        uint64_t L = 0;
+        if (!read_varint_span(p, e, L)) return false;
+        if ((size_t)(e - p) < L) return false;
 
-    if (tag != 0xFA) {
-      // Skip unknown/non-public tags
-      p += L;
-      continue;
-    }
+        const uint8_t* q  = p;
+        const uint8_t* qe = p + L;
 
-    // found 0xFA — parse payload
-    const uint8_t* q  = p;
-    const uint8_t* qe = p + L;
+        if (q >= qe) return false;
+        out.version = *q++;
+        if (out.version != 1) return false;
 
-    // STRICT: first byte must be version 1
-    if (q >= qe) return false;
-    out.version = *q++;
-    if (out.version != 1) return false;
+        if (!read_lp_str_span(q, qe, out.recipient_str)) return false;
+        if (!read_lp_str_span(q, qe, out.sender_str))    return false;
+        if (!read_varint_span(q, qe, out.out_index))     return false;
+        if (!read_u64_le_span(q, qe, out.amount_atomic)) return false;
 
-    // recipient (lp)
-    if (!read_lp_str_span(q, qe, out.recipient_str)) return false;
+        if ((size_t)(qe - q) != 64) return false;
+        out.sig = bin_to_hex(std::string((const char*)q, 64));
+        q += 64;
 
-    // sender (lp)
-    if (!read_lp_str_span(q, qe, out.sender_str)) return false;
+        return q == qe; // parsed exactly this 0xFA payload
+      }
 
-    // index (varint)
-    if (!read_varint_span(q, qe, out.out_index)) return false;
+      case 0x01: { // TX_EXTRA_TAG_PUBKEY — fixed 32 bytes
+        if (e - p < 32) return false;
+        p += 32;
+        break;
+      }
 
-    // amount (u64 LE)
-    if (!read_u64_le_span(q, qe, out.amount_atomic)) return false;
+      case 0x02: // TX_EXTRA_NONCE — varint length
+      case 0x04: // TX_EXTRA_ADDITIONAL_PUBKEYS — varint length (then N*32)
+      case 0x15: // other varint-sized custom fields (if any)
+      {
+        uint64_t L = 0;
+        if (!read_varint_span(p, e, L)) return false;
+        if ((size_t)(e - p) < L) return false;
+        p += L;
+        break;
+      }
 
-    // sig (64B)
-    if ((size_t)(qe - q) != 64) return false; // must be exactly 64 bytes remaining
-    out.sig = bin_to_hex(std::string((const char*)q, 64));
-    q += 64;
+      case 0x00: { // TX_EXTRA_PADDING — run of zero bytes
+        // padding is a series of zero bytes; we've consumed one (the tag itself),
+        // now keep consuming zeros until a non-zero or end.
+        while (p < e && *p == 0x00) ++p;
+        break;
+      }
 
-    return q == qe; // parsed exactly
+      default: {
+        // Best-effort skip: many extensions use varint length right after tag.
+        // Try to read a varint length; if it fails, bail out safely.
+        const uint8_t* save = p;
+        uint64_t L = 0;
+        if (!read_varint_span(p, e, L) || (size_t)(e - p) < L) {
+          // Unknown fixed-size tag – cannot safely skip
+          return false;
+        }
+        p += L;
+        break;
+      }
+    } // switch
   }
-
   return false; // no 0xFA found
 }
-// ---- end STRICT decoder ----
+// End Public (0xFA) extra decoder
 
 using namespace cryptonote;
 using namespace crypto;
