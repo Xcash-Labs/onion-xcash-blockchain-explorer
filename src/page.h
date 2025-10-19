@@ -260,43 +260,6 @@ static inline bool parse_vrf_07_extra_hex(const std::string& extra_hex, vrf07& o
 }
 // ---- end decoder ----
 
-// ---- Public (0xFA) extra decoder
-struct public_v1 {
-  uint8_t     version{0};         // must be 1
-  std::string recipient_str;      // Base58 (lp: u8 len + bytes)
-  std::string sender_str;         // Base58 (lp: u8 len + bytes)
-  uint64_t    out_index{0};       // varint
-  uint64_t    amount_atomic{0};   // u64 LE
-  std::string sig;                // 64B hex
-};
-
-// helpers: hex_to_bin, bin_to_hex from your VRF code
-static inline bool read_varint_span(const uint8_t*& p, const uint8_t* e, uint64_t& v) {
-  v = 0; int s = 0;
-  while (p < e && s < 70) {
-    uint8_t c = *p++;
-    v |= (uint64_t)(c & 0x7F) << s;
-    if (!(c & 0x80)) return true;
-    s += 7;
-  }
-  return false;
-}
-
-static inline bool read_u64_le_span(const uint8_t*& p, const uint8_t* e, uint64_t& v) {
-  if (e - p < 8) return false;
-  uint64_t x = 0; for (int i = 0; i < 8; ++i) x |= (uint64_t)p[i] << (8*i);
-  p += 8; v = x; return true;
-}
-
-static inline bool read_lp_str_span(const uint8_t*& p, const uint8_t* e, std::string& out) {
-  if (p >= e) return false;
-  uint8_t n = *p++;
-  if ((size_t)(e - p) < n) return false;
-  out.assign((const char*)p, n);
-  p += n;
-  return true;
-}
-
 // ---- Public (0xFA) extra decoder — STRICT v1 (NEW layout) ----
 struct public_v1 {
   uint8_t     version{0};         // must be 1
