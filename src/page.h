@@ -580,35 +580,6 @@ struct tx_details
           }
         }
 
-        // Parse Public (0xFA) and expose to the template
-        {
-          xmreg::public_v1 p;
-          bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
-          txd_map["has_public_extra"] = ok;
-
-          if (ok) {
-            // Convert atomic → XCA string with 6 decimals (adjust if your coin has different precision)
-            auto to_xca = [](uint64_t atomic) -> std::string {
-              uint64_t whole = atomic / 1'000'000ULL;
-              uint64_t frac = atomic % 1'000'000ULL;
-              std::ostringstream oss;
-              oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
-              return oss.str();
-            };
-            txd_map["public_extra"] = mstch::map{
-                {"version",        static_cast<uint64_t>(p.version)},     // 1
-                {"sender_str",     p.sender_str},                         // Base58
-                {"recipient_str",  p.recipient_str},                      // Base58
-                {"out_index",      static_cast<uint64_t>(p.out_index)},
-                {"amount_xca",     to_xca(p.amount_atomic)},              // preformatted XCA string
-                {"amount_atomic",  p.amount_atomic},                      // uint64_t
-                {"sig",            p.sig},                                // 64B hex
-                {"sig_ok",         sig_ok},                               // bool -> {{#public_extra.sig_ok}}…{{/…}}
-                {"self_transfer",  self_transfer}                         // bool -> optional UI note
-            };
-          }
-        }
-
         return txd_map;
     }
 
@@ -6403,36 +6374,7 @@ get_tx_json(const transaction& tx, const tx_details& txd)
     }
   }
 
-  // --- Parse Public (0xFA) and add to JSON ---
-  {
-    xmreg::public_v1 p;
-    const bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
-    j_tx["has_public_extra"] = ok;
 
-    if (ok) {
-      // atomic -> XCA with 6 decimals
-      auto to_xca = [](uint64_t atomic) -> std::string {
-        uint64_t whole = atomic / 1'000'000ULL;
-        uint64_t frac = atomic % 1'000'000ULL;
-        std::ostringstream oss;
-        oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
-        return oss.str();
-      };
-
-      j_tx["public_extra"] = {
-        {"version",        static_cast<uint64_t>(p.version)},     // 1
-        {"sender_str",     p.sender_str},                         // Base58
-        {"recipient_str",  p.recipient_str},                      // Base58
-        {"out_index",      static_cast<uint64_t>(p.out_index)},
-        {"amount_xca",     to_xca(p.amount_atomic)},              // preformatted XCA string
-        {"amount_atomic",  p.amount_atomic},                      // uint64_t
-        {"sig",            p.sig},                                // 64B hex
-        {"sig_ok",         sig_ok},                               // bool -> {{#public_extra.sig_ok}}…{{/…}}
-        {"self_transfer",  self_transfer}                         // bool -> optional UI note
-    } else {
-      j_tx["public_extra"] = nullptr;
-    }
-  }
 
   return j_tx;
 }
@@ -6618,36 +6560,6 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
                 {"total_votes", static_cast<uint64_t>(v.total_votes)},
                 {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
                 {"vote_hash", v.vote_hash}};
-          }
-        }
-
-        // Parse Public (0xFA) and expose to the template
-        {
-          xmreg::public_v1 p;
-          bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
-          context["has_public_extra"] = ok;
-
-          if (ok) {
-            // Convert atomic → XCA string with 6 decimals (adjust if your coin has different precision)
-            auto to_xca = [](uint64_t atomic) -> std::string {
-              uint64_t whole = atomic / 1'000'000ULL;
-              uint64_t frac = atomic % 1'000'000ULL;
-              std::ostringstream oss;
-              oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
-              return oss.str();
-            };
-
-            context["public_extra"] = mstch::map{
-                {"version",        static_cast<uint64_t>(p.version)},     // 1
-                {"sender_str",     p.sender_str},                         // Base58
-                {"recipient_str",  p.recipient_str},                      // Base58
-                {"out_index",      static_cast<uint64_t>(p.out_index)},
-                {"amount_xca",     to_xca(p.amount_atomic)},              // preformatted XCA string
-                {"amount_atomic",  p.amount_atomic},                      // uint64_t
-                {"sig",            p.sig},                                // 64B hex
-                {"sig_ok",         sig_ok},                               // bool -> {{#public_extra.sig_ok}}…{{/…}}
-                {"self_transfer",  self_transfer}                         // bool -> optional UI note
-            };
           }
         }
 
