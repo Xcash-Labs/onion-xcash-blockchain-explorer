@@ -370,19 +370,17 @@ static inline bool parse_public_fa_extra_hex_v1_strict(const std::string& extra_
 }
 // End Public (0xFA) extra decoder
 
-
-// --- verifier for your new v1 layout ---
-static inline bool verify_public_tx_v1(const public_v1& p,
+static inline bool verify_public_tx_v1(const xmreg::public_v1& p,
                                        const crypto::public_key& R_from_tx,
                                        cryptonote::network_type nettype)
 {
-
-    // 1) decode sender address to get spend pub
-  cryptonote::account_public_address sender_addr{};
-  if (!get_account_address_from_str(sender_addr, nettype, p.sender_str))
+  // 1) Decode sender address -> get spend pub
+  cryptonote::address_parse_info info{};
+  if (!cryptonote::get_account_address_from_str(info, nettype, p.sender_str))
     return false;
+  const crypto::public_key& sender_spend_pub = info.address.m_spend_public_key;
 
-  // 2) rebuild canonical message
+  // 2) Rebuild canonical message
   std::string msg;
   {
     static const char* DOMAIN = "XCA-PUBLIC-TX-v1";
@@ -391,13 +389,11 @@ static inline bool verify_public_tx_v1(const public_v1& p,
     msg.append(reinterpret_cast<const char*>(&R_from_tx), sizeof(R_from_tx));
 
     auto lp = [&](const std::string& s) -> bool {
-    if (s.size() > 255) return false;
-    msg.push_back(static_cast<uint8_t>(s.size()));
-    msg.append(s);
-    return true;
+      if (s.size() > 255) return false; // your encoder caps to 255
+      msg.push_back(static_cast<uint8_t>(s.size()));
+      msg.append(s);
+      return true;
     };
-    if (!lp(p.recipient_str) || !lp(p.sender_str)) return false;
-
     auto write_varint = [&](uint64_t v) {
       while (v >= 0x80) { msg.push_back(uint8_t((v & 0x7F) | 0x80)); v >>= 7; }
       msg.push_back(uint8_t(v));
@@ -406,8 +402,8 @@ static inline bool verify_public_tx_v1(const public_v1& p,
       for (int i = 0; i < 8; ++i) msg.push_back(uint8_t((v >> (8*i)) & 0xFF));
     };
 
-    lp(p.recipient_str);
-    lp(p.sender_str);
+    if (!lp(p.recipient_str)) return false;
+    if (!lp(p.sender_str))    return false;
     write_varint(p.out_index);
     write_le64(p.amount_atomic);
   }
@@ -415,12 +411,12 @@ static inline bool verify_public_tx_v1(const public_v1& p,
   crypto::hash H{};
   crypto::cn_fast_hash(msg.data(), msg.size(), H);
 
-  // 3) parse signature and check
+  // 3) Parse signature (hex -> pod) and verify
   crypto::signature sig{};
-  if (!epee::string_tools::hex_to_pod(p.sig, sig)) return false;
+  if (!epee::string_tools::hex_to_pod(p.sig, sig))  // <-- fully-qualified
+    return false;
 
-  bool ok_out = crypto::check_signature(H, sender_addr.m_spend_public_key, sig);
-  return ok_out;
+  return crypto::check_signature(H, sender_spend_pub, sig);
 }
 
 using namespace cryptonote;
