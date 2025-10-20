@@ -56,7 +56,7 @@ MempoolStatus::start_mempool_status_thread()
                  }
                  else
                  {
-//                     cout << "Current network info read, ";
+/                    cout << "Current network info read, ";
                      loop_index = 0;
                  }
              }
@@ -65,9 +65,9 @@ MempoolStatus::start_mempool_status_thread()
              {
                  vector<mempool_tx> current_mempool_txs = get_mempool_txs();
 
-//                 cout << "mempool status txs: "
-//                      << current_mempool_txs.size()
-//                      << endl;
+                 cout << "mempool status txs: "
+                      << current_mempool_txs.size()
+                      << endl;
              }
 
              // when we reach top of the blockchain, update
