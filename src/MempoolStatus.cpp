@@ -56,7 +56,7 @@ MempoolStatus::start_mempool_status_thread()
                  }
                  else
                  {
-/                    cout << "Current network info read, ";
+                    cout << "Current network info read, ";
                      loop_index = 0;
                  }
              }
