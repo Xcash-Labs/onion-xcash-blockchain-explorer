@@ -371,9 +371,57 @@ static inline bool parse_public_fa_extra_hex_v1_strict(const std::string& extra_
 // End Public (0xFA) extra decoder
 
 
+// --- verifier for your new v1 layout ---
+static inline bool verify_public_tx_v1(const public_v1& p,
+                                       const crypto::public_key& R_from_tx,
+                                       cryptonote::network_type nettype)
+{
 
+    // 1) decode sender address to get spend pub
+  cryptonote::account_public_address sender_addr{};
+  if (!get_account_address_from_str(sender_addr, nettype, p.sender_str))
+    return false;
 
+  // 2) rebuild canonical message
+  std::string msg;
+  {
+    static const char* DOMAIN = "XCA-PUBLIC-TX-v1";
+    msg.append(DOMAIN, std::strlen(DOMAIN));
 
+    msg.append(reinterpret_cast<const char*>(&R_from_tx), sizeof(R_from_tx));
+
+    auto lp = [&](const std::string& s) -> bool {
+    if (s.size() > 255) return false;
+    msg.push_back(static_cast<uint8_t>(s.size()));
+    msg.append(s);
+    return true;
+    };
+    if (!lp(p.recipient_str) || !lp(p.sender_str)) return false;
+
+    auto write_varint = [&](uint64_t v) {
+      while (v >= 0x80) { msg.push_back(uint8_t((v & 0x7F) | 0x80)); v >>= 7; }
+      msg.push_back(uint8_t(v));
+    };
+    auto write_le64 = [&](uint64_t v) {
+      for (int i = 0; i < 8; ++i) msg.push_back(uint8_t((v >> (8*i)) & 0xFF));
+    };
+
+    lp(p.recipient_str);
+    lp(p.sender_str);
+    write_varint(p.out_index);
+    write_le64(p.amount_atomic);
+  }
+
+  crypto::hash H{};
+  crypto::cn_fast_hash(msg.data(), msg.size(), H);
+
+  // 3) parse signature and check
+  crypto::signature sig{};
+  if (!hex_to_pod(p.sig, sig)) return false;
+
+  bool ok_out = crypto::check_signature(H, sender_addr.m_spend_public_key, sig);
+  return ok_out;
+}
 
 using namespace cryptonote;
 using namespace crypto;
@@ -6332,8 +6380,6 @@ json
 get_tx_json(const transaction& tx, const tx_details& txd)
 {
 
-//  const std::string extra_hex = txd.get_extra_str();
-
   json j_tx{
       {"tx_hash", pod_to_hex(txd.hash)},
       {"tx_fee", txd.fee},
@@ -6556,12 +6602,8 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
             // Flags for UI
             const bool self_transfer = (p.sender_str == p.recipient_str);
 
-            bool sig_ok = false;  // TODO: set via verify_public_tx_v1(p, R_from_tx)
-            // If you have R_from_tx in scope, you can enable:
-            // crypto::public_key R_from_tx{};
-            // if (extract_tx_pubkey_from_extra(extra_bytes, R_from_tx)) {
-            //   sig_ok = verify_public_tx_v1(p, R_from_tx);
-            // }
+            bool sig_ok = false;
+            sig_ok = xmreg::verify_public_tx_v1(p, txd.pk, nettype);
 
             context["public_extra"] = mstch::map{
                 {"version", static_cast<uint64_t>(p.version)},  // 1
