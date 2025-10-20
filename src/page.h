@@ -370,6 +370,45 @@ static inline bool parse_public_fa_extra_hex_v1_strict(const std::string& extra_
 }
 // End Public (0xFA) extra decoder
 
+// Verify sign for public transaction
+static inline bool verify_public_tx_v1(const public_v1& p,
+                         const crypto::public_key& R_from_tx,
+                         bool& ok) {
+  ok = false;
+
+  // 1) Decode sender address -> get spend pub key
+  cryptonote::account_public_address sender_addr{};
+  if (!get_account_address_from_str(sender_addr, /*net*/ nettype, p.sender_str))
+    return false;
+
+  // 2) Rebuild message
+  std::string msg;
+  {
+    static const char* DOMAIN = "XCA-PUBLIC-TX-v1";
+    msg.append(DOMAIN, std::strlen(DOMAIN));
+    msg.append(reinterpret_cast<const char*>(&R_from_tx), sizeof(R_from_tx));
+
+    auto lp = [&](const std::string& s){ msg.push_back(uint8_t(s.size())); msg.append(s); };
+    auto write_varint = [&](uint64_t v){ while (v>=0x80){ msg.push_back(uint8_t((v&0x7F)|0x80)); v>>=7; } msg.push_back(uint8_t(v)); };
+    auto write_le64   = [&](uint64_t v){ for (int i=0;i<8;++i) msg.push_back(uint8_t((v>>(8*i))&0xFF)); };
+
+    lp(p.recipient_str);
+    lp(p.sender_str);
+    write_varint(p.out_index);
+    write_le64(p.amount_atomic);
+  }
+
+  crypto::hash H{};
+  crypto::cn_fast_hash(msg.data(), msg.size(), H);
+
+  // 3) Check signature
+  crypto::signature sig{};
+  if (!hex_to_pod(p.sig, sig)) return false;
+
+  ok = crypto::check_signature(H, sender_addr.m_spend_public_key, sig);
+  return true;
+}
+
 using namespace cryptonote;
 using namespace crypto;
 using namespace std;
@@ -549,7 +588,7 @@ struct tx_details
             payed_for_kB_micro_str = fmt::format("{:04.0f}", payed_for_kB * 1e6);
         }
 
-        const std::string extra_hex = get_extra_str();
+//        const std::string extra_hex = get_extra_str();
 
             mstch::map txd_map{
                 {"hash", pod_to_hex(hash)},
@@ -574,70 +613,12 @@ struct tx_details
                 {"has_payment_id8", payment_id8 != null_hash8},
                 {"payment_id", pod_to_hex(payment_id)},
                 {"confirmations", no_confirmations},
-                {"extra", extra_hex},
+                {"extra", get_extra_str()},
                 {"payment_id8", pod_to_hex(payment_id8)},
                 {"unlock_time", unlock_time},
                 {"tx_size", fmt::format("{:0.4f}", tx_size)},
                 {"tx_size_short", fmt::format("{:0.2f}", tx_size)},
                 {"has_add_pks", !additional_pks.empty()}};
-
-        // Parse VRF 0x07 and expose to the template
-        {
-          xmreg::vrf07 v;
-          bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
-          txd_map["has_vrf_extra"] = ok;
-
-          if (ok) {
-            txd_map["vrf_extra"] = mstch::map{
-                {"tx_pubkey", v.tx_pubkey},
-                {"vrf_proof", v.vrf_proof},
-                {"vrf_beta", v.vrf_beta},
-                {"vrf_pubkey", v.vrf_pubkey},
-                {"total_votes", static_cast<uint64_t>(v.total_votes)},
-                {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
-                {"vote_hash", v.vote_hash}};
-          }
-        }
-
-        // Parse Public (0xFA) and expose to the template
-        {
-          xmreg::public_v1 p;
-          const bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
-          txd_map["has_public_extra"] = ok;
-
-          if (ok) {
-            // Convert atomic → XCA string with 6 decimals
-            auto to_xca = [](uint64_t atomic) -> std::string {
-              uint64_t whole = atomic / 1'000'000ULL;
-              uint64_t frac = atomic % 1'000'000ULL;
-              std::ostringstream oss;
-              oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
-              return oss.str();
-            };
-
-            // Flags for UI
-            const bool self_transfer = (p.sender_str == p.recipient_str);
-
-            bool sig_ok = false;  // set true if you verify below
-            // If you have the tx pubkey R available, you can verify the signature:
-            // crypto::public_key R_from_tx{};
-            // if (extract_tx_pubkey_from_extra(extra_bytes, R_from_tx)) {
-            //   sig_ok = verify_public_tx_v1(p, R_from_tx);
-            // }
-
-            txd_map["public_extra"] = mstch::map{
-                {"version", static_cast<uint64_t>(p.version)},  // 1
-                {"sender_str", p.sender_str},                   // Base58
-                {"recipient_str", p.recipient_str},             // Base58
-                {"out_index", static_cast<uint64_t>(p.out_index)},
-                {"amount_xca", to_xca(p.amount_atomic)},  // preformatted XCA
-                {"amount_atomic", p.amount_atomic},       // uint64_t
-                {"sig", p.sig},                           // 64B hex
-                {"sig_ok", sig_ok},                       // bool
-                {"self_transfer", self_transfer}          // bool
-            };
-          }
-        }
 
         return txd_map;
     }
