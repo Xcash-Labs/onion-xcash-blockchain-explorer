@@ -43,7 +43,7 @@ main(int ac, const char* av[])
 {
 
     // Set the log level to Warning
-    // app.loglevel(crow::LogLevel::ERROR);
+    app.loglevel(crow::LogLevel::ERROR);
 
     // get command line options
     xmreg::CmdLineOptions opts {ac, av};
