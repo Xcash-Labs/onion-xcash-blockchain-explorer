@@ -41,10 +41,6 @@ struct jsonresponse: public crow::response
 int
 main(int ac, const char* av[])
 {
-
-    // Set the log level to Warning
-    app.loglevel(crow::LogLevel::ERROR);
-
     // get command line options
     xmreg::CmdLineOptions opts {ac, av};
 
