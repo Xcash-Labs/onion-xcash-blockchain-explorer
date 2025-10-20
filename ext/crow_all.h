@@ -145,7 +145,7 @@ struct returnable
     default to INFO
 */
 #ifndef CROW_LOG_LEVEL
-#define CROW_LOG_LEVEL 1
+#define CROW_LOG_LEVEL 3
 #endif
 
 #ifndef CROW_STATIC_DIRECTORY
