@@ -6332,7 +6332,7 @@ json
 get_tx_json(const transaction& tx, const tx_details& txd)
 {
 
-  const std::string extra_hex = txd.get_extra_str();
+//  const std::string extra_hex = txd.get_extra_str();
 
   json j_tx{
       {"tx_hash", pod_to_hex(txd.hash)},
@@ -6346,71 +6346,10 @@ get_tx_json(const transaction& tx, const tx_details& txd)
       {"rct_type", tx.rct_signatures.type},
       {"coinbase", is_coinbase(tx)},
       {"mixin", txd.mixin_no},
-      {"extra", extra_hex},
+      {"extra", txd.get_extra_str()},
       {"payment_id", (txd.payment_id != null_hash ? pod_to_hex(txd.payment_id) : "")},
       {"payment_id8", (txd.payment_id8 != null_hash8 ? pod_to_hex(txd.payment_id8) : "")},
   };
-
-  // --- Parse VRF 0x07 and add to JSON ---
-  {
-    xmreg::vrf07 v;
-    const bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
-    j_tx["has_vrf_extra"] = ok;
-
-    if (ok) {
-      j_tx["vrf_extra"] = {
-          {"tx_pubkey", v.tx_pubkey},
-          {"vrf_proof", v.vrf_proof},
-          {"vrf_beta", v.vrf_beta},
-          {"vrf_pubkey", v.vrf_pubkey},
-          {"total_votes", static_cast<uint64_t>(v.total_votes)},
-          {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
-          {"vote_hash", v.vote_hash}};
-    } else {
-      j_tx["vrf_extra"] = nullptr;
-    }
-  }
-
-  // --- Parse Public (0xFA) and add to JSON ---
-  {
-    xmreg::public_v1 p;
-    const bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
-    j_tx["has_public_extra"] = ok;
-
-    if (ok) {
-      // atomic -> XCA with 6 decimals
-      auto to_xca = [](uint64_t atomic) -> std::string {
-        uint64_t whole = atomic / 1'000'000ULL;
-        uint64_t frac = atomic % 1'000'000ULL;
-        std::ostringstream oss;
-        oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
-        return oss.str();
-      };
-
-      // define these before use
-      bool self_transfer = (p.sender_str == p.recipient_str);
-      bool sig_ok = false;  // TODO: set via verify_public_tx_v1(p, R_from_tx)
-      // If you have the tx pubkey R in scope, you can enable this:
-      // crypto::public_key R_from_tx{};
-      // if (extract_tx_pubkey_from_extra(extra_bytes, R_from_tx)) {
-      //   sig_ok = verify_public_tx_v1(p, R_from_tx);
-      // }
-
-      j_tx["public_extra"] = {
-          {"version", static_cast<uint64_t>(p.version)},  // 1
-          {"sender_str", p.sender_str},                   // Base58
-          {"recipient_str", p.recipient_str},             // Base58
-          {"out_index", static_cast<uint64_t>(p.out_index)},
-          {"amount_xca", to_xca(p.amount_atomic)},  // preformatted XCA string
-          {"amount_atomic", p.amount_atomic},       // uint64_t
-          {"sig", p.sig},                           // 64B hex
-          {"sig_ok", sig_ok},                       // bool -> {{#public_extra.sig_ok}}…{{/…}}
-          {"self_transfer", self_transfer}          // bool -> optional UI note
-      };
-    } else {
-      j_tx["public_extra"] = nullptr;
-    }
-  }
 
   return j_tx;
 }
@@ -6542,7 +6481,7 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
     string tx_json = obj_to_json_str(tx);
     double tx_size = static_cast<double>(txd.size) / 1024.0;
     double payed_for_kB = XMR_AMOUNT(txd.fee) / tx_size;
-//    const std::string extra_hex = txd.get_extra_str();
+    const std::string extra_hex = txd.get_extra_str();
 
     // initalise page tempate map with basic info about blockchain
     mstch::map context {
@@ -6569,7 +6508,7 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
             {"confirmations"         , txd.no_confirmations},
             {"payment_id"            , pid_str},
             {"payment_id8"           , pid8_str},
-            {"extra"                 , txd.get_extra_str()},
+            {"extra"                 , extra_hex},
             {"with_ring_signatures"  , static_cast<bool>(with_ring_signatures)},
             {"tx_json"               , tx_json},
             {"is_ringct"             , (tx.version > 1)},
@@ -6581,7 +6520,62 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
             {"construction_time"     , string {}},
     };
 
+        // Parse VRF 0x07 and expose to the template
+        {
+          xmreg::vrf07 v;
+          bool ok = xmreg::parse_vrf_07_extra_hex(extra_hex, v);
+          context["has_vrf_extra"] = ok;
+          if (ok) {
+            context["vrf_extra"] = mstch::map{
+                {"tx_pubkey", v.tx_pubkey},
+                {"vrf_proof", v.vrf_proof},
+                {"vrf_beta", v.vrf_beta},
+                {"vrf_pubkey", v.vrf_pubkey},
+                {"total_votes", static_cast<uint64_t>(v.total_votes)},
+                {"winning_vote", static_cast<uint64_t>(v.winning_vote)},
+                {"vote_hash", v.vote_hash}};
+          }
+        }
 
+        // Parse Public (0xFA) and expose to the template
+        {
+          xmreg::public_v1 p;
+          const bool ok = xmreg::parse_public_fa_extra_hex_v1_strict(extra_hex, p);
+          context["has_public_extra"] = ok;
+
+          if (ok) {
+            // atomic → XCA with 6 decimals
+            auto to_xca = [](uint64_t atomic) -> std::string {
+              uint64_t whole = atomic / 1'000'000ULL;
+              uint64_t frac = atomic % 1'000'000ULL;
+              std::ostringstream oss;
+              oss << whole << "." << std::setw(6) << std::setfill('0') << frac;
+              return oss.str();
+            };
+
+            // Flags for UI
+            const bool self_transfer = (p.sender_str == p.recipient_str);
+
+            bool sig_ok = false;  // TODO: set via verify_public_tx_v1(p, R_from_tx)
+            // If you have R_from_tx in scope, you can enable:
+            // crypto::public_key R_from_tx{};
+            // if (extract_tx_pubkey_from_extra(extra_bytes, R_from_tx)) {
+            //   sig_ok = verify_public_tx_v1(p, R_from_tx);
+            // }
+
+            context["public_extra"] = mstch::map{
+                {"version", static_cast<uint64_t>(p.version)},  // 1
+                {"sender_str", p.sender_str},                   // Base58
+                {"recipient_str", p.recipient_str},             // Base58
+                {"out_index", static_cast<uint64_t>(p.out_index)},
+                {"amount_xca", to_xca(p.amount_atomic)},  // preformatted XCA
+                {"amount_atomic", p.amount_atomic},       // uint64_t
+                {"sig", p.sig},                           // 64B hex
+                {"sig_ok", sig_ok},                       // bool
+                {"self_transfer", self_transfer}          // bool
+            };
+          }
+        }
 
     // append tx_json as in raw format to html
     context["tx_json_raw"] = mstch::lambda{[=](const std::string& text) -> mstch::node {
