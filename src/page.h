@@ -417,7 +417,7 @@ static inline bool verify_public_tx_v1(const public_v1& p,
 
   // 3) parse signature and check
   crypto::signature sig{};
-  if (!hex_to_pod(p.sig, sig)) return false;
+  if (!epee::string_tools::hex_to_pod(p.sig, sig)) return false;
 
   bool ok_out = crypto::check_signature(H, sender_addr.m_spend_public_key, sig);
   return ok_out;
