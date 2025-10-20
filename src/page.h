@@ -370,44 +370,10 @@ static inline bool parse_public_fa_extra_hex_v1_strict(const std::string& extra_
 }
 // End Public (0xFA) extra decoder
 
-// Verify sign for public transaction
-static inline bool verify_public_tx_v1(const public_v1& p,
-                         const crypto::public_key& R_from_tx,
-                         bool& ok) {
-  ok = false;
 
-  // 1) Decode sender address -> get spend pub key
-  cryptonote::account_public_address sender_addr{};
-  if (!get_account_address_from_str(sender_addr, /*net*/ nettype, p.sender_str))
-    return false;
 
-  // 2) Rebuild message
-  std::string msg;
-  {
-    static const char* DOMAIN = "XCA-PUBLIC-TX-v1";
-    msg.append(DOMAIN, std::strlen(DOMAIN));
-    msg.append(reinterpret_cast<const char*>(&R_from_tx), sizeof(R_from_tx));
 
-    auto lp = [&](const std::string& s){ msg.push_back(uint8_t(s.size())); msg.append(s); };
-    auto write_varint = [&](uint64_t v){ while (v>=0x80){ msg.push_back(uint8_t((v&0x7F)|0x80)); v>>=7; } msg.push_back(uint8_t(v)); };
-    auto write_le64   = [&](uint64_t v){ for (int i=0;i<8;++i) msg.push_back(uint8_t((v>>(8*i))&0xFF)); };
 
-    lp(p.recipient_str);
-    lp(p.sender_str);
-    write_varint(p.out_index);
-    write_le64(p.amount_atomic);
-  }
-
-  crypto::hash H{};
-  crypto::cn_fast_hash(msg.data(), msg.size(), H);
-
-  // 3) Check signature
-  crypto::signature sig{};
-  if (!hex_to_pod(p.sig, sig)) return false;
-
-  ok = crypto::check_signature(H, sender_addr.m_spend_public_key, sig);
-  return true;
-}
 
 using namespace cryptonote;
 using namespace crypto;
