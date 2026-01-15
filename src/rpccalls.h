@@ -165,14 +165,14 @@ public:
 
             if (!err.empty())
             {
-                cerr << "Error connecting to XCash daemon due to "
+                cerr << "Error connecting to XCash-Labs daemon due to "
                      << err << endl;
                 return false;
             }
         }
         else
         {
-            cerr << "Error connecting to XCash daemon at "
+            cerr << "Error connecting to XCash-Labs daemon at "
                  << daemon_url << endl;
             return false;
         }

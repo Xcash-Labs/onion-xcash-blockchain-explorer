@@ -1172,7 +1172,7 @@ is_output_ours(const size_t& output_index,
 
     // get the tx output public key
     // that normally would be generated for us,
-    // if someone had sent us some xca.
+    // if someone had sent us some xck.
     public_key pubkey;
 
     derive_public_key(derivation,

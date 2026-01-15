@@ -169,10 +169,10 @@ MempoolStatus::read_mempool()
         // key images of inputs
         vector<txin_to_key> input_key_imgs;
 
-        // public keys and xca amount of outputs
+        // public keys and xck amount of outputs
         vector<output_tuple_with_tag> output_pub_keys;
 
-        // sum xca in inputs and ouputs in the given tx
+        // sum xck in inputs and ouputs in the given tx
         const array<uint64_t, 4>& sum_data = summary_of_in_out_rct(
                tx, output_pub_keys, input_key_imgs);
 

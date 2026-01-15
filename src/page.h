@@ -559,7 +559,7 @@ struct tx_details
     // key images of inputs
     vector<txin_to_key> input_key_imgs;
 
-    // public keys and xca amount of outputs
+    // public keys and xck amount of outputs
     vector<output_tuple_with_tag> output_pub_keys;
 
     mstch::map
@@ -1474,7 +1474,7 @@ show_block(uint64_t _blk_height)
     context["sum_fees"]
             = xmreg::xmr_amount_to_str(sum_fees, "{:0.6f}", false);
 
-    // get xca in the block reward
+    // get xck in the block reward
     context["blk_reward"]
             = xmreg::xmr_amount_to_str(txd_coinbase.xmr_outputs - sum_fees, "{:0.6f}");
 
@@ -2186,7 +2186,7 @@ show_my_outputs(string tx_hash_str,
 
     if (xmr_address_str.empty())
     {
-        return string("XCash address not provided!");
+        return string("XCash-Labs address not provided!");
     }
 
     if (viewkey_str.empty())
@@ -2212,7 +2212,7 @@ show_my_outputs(string tx_hash_str,
     if (!xmreg::parse_str_address(xmr_address_str,  address_info, nettype))
     {
         cerr << "Cant parse string address: " << xmr_address_str << endl;
-        return string("Cant parse xca address: " + xmr_address_str);
+        return string("Cant parse xck address: " + xmr_address_str);
     }
 
     // parse string representing given private key
@@ -2474,7 +2474,7 @@ show_my_outputs(string tx_hash_str,
 
         // get the tx output public key
         // that normally would be generated for us,
-        // if someone had sent us some xca.
+        // if someone had sent us some xck.
         public_key tx_pubkey;
 
         derive_public_key(derivation,
@@ -2587,7 +2587,7 @@ show_my_outputs(string tx_hash_str,
 
         vector<txin_to_key> input_key_imgs = xmreg::get_key_images(tx);
 
-        // to hold sum of xca in matched mixins, those that
+        // to hold sum of xck in matched mixins, those that
         // perfectly match mixin public key with outputs in mixn_tx.
         uint64_t sum_mixin_xca {0};
 
@@ -2596,7 +2596,7 @@ show_my_outputs(string tx_hash_str,
         uint64_t no_of_matched_mixins {0};
 
         // Hold all possible mixins that we found. This is only used so that
-        // we get number of all posibilities, and their total xca amount
+        // we get number of all posibilities, and their total xck amount
         // (useful for unit testing)
         //                     public_key    , amount
         std::vector<std::pair<crypto::public_key, uint64_t>> all_possible_mixins;
@@ -2806,7 +2806,7 @@ show_my_outputs(string tx_hash_str,
 
                     // get the tx output public key
                     // that normally would be generated for us,
-                    // if someone had sent us some xca.
+                    // if someone had sent us some xck.
                     public_key tx_pubkey_generated;
 
                     derive_public_key(derivation,
@@ -2977,7 +2977,7 @@ show_my_outputs(string tx_hash_str,
 
         //cout << "\nall_possible_mixins: " << all_possible_mixins.size() << '\n';
 
-        // useful for unit testing as it provides total xca sum
+        // useful for unit testing as it provides total xck sum
         // of possible mixins
         uint64_t all_possible_mixins_amount1  {0};
 
@@ -3604,7 +3604,7 @@ show_checkrawtx(string raw_tx_data, string action)
             // mark that we have signed tx data for use in mstch
             tx_context["have_raw_tx"] = true;
 
-            // provide total mount of inputs xca
+            // provide total mount of inputs xck
             tx_context["inputs_xmr_sum"] = xmreg::xmr_amount_to_str(inputs_xmr_sum);
 
             // get reference to inputs array created of the tx
@@ -4012,7 +4012,7 @@ show_checkrawkeyimgs(string raw_data, string viewkey_str)
 
     }
 
-    // get xca address stored in this key image file
+    // get xck address stored in this key image file
     const account_public_address* xmr_address =
             reinterpret_cast<const account_public_address*>(
                     decoded_raw_data.data());
@@ -4147,7 +4147,7 @@ show_checkcheckrawoutput(string raw_data, string viewkey_str)
     // header is public spend and keys
     const size_t header_lenght    = 2 * sizeof(crypto::public_key);
 
-    // get xca address stored in this key image file
+    // get xck address stored in this key image file
     const account_public_address* xmr_address =
             reinterpret_cast<const account_public_address*>(
                     decoded_raw_data.data());
@@ -5694,7 +5694,7 @@ json_outputs(string tx_hash_str,
     if (address_str.empty())
     {
         j_response["status"]  = "error";
-        j_response["message"] = "XCash address not provided";
+        j_response["message"] = "XCash-Labs address not provided";
         return j_response;
     }
 
@@ -5805,7 +5805,7 @@ json_outputs(string tx_hash_str,
 
         // get the tx output public key
         // that normally would be generated for us,
-        // if someone had sent us some xca.
+        // if someone had sent us some xck.
         public_key tx_pubkey;
 
         derive_public_key(derivation,
@@ -5934,7 +5934,7 @@ json_outputsblocks(string _limit,
     if (address_str.empty())
     {
         j_response["status"]  = "error";
-        j_response["message"] = "XCash address not provided";
+        j_response["message"] = "XCash-Labs address not provided";
         return j_response;
     }
 
@@ -6195,7 +6195,7 @@ json_version()
             {"last_git_commit_hash", string {GIT_COMMIT_HASH}},
             {"last_git_commit_date", string {GIT_COMMIT_DATETIME}},
             {"git_branch_name"     , string {GIT_BRANCH_NAME}},
-            {"monero_version_full" , string {XCASH_VERSION_FULL}},
+            {"xcash_version_full" , string {XCASH_VERSION_FULL}},
             {"api"                 , ONIONEXPLORER_RPC_VERSION},
             {"blockchain_height"   , core_storage->get_current_blockchain_height()}
     };
@@ -6287,7 +6287,7 @@ find_our_outputs(
 
             // get the tx output public key
             // that normally would be generated for us,
-            // if someone had sent us some xca.
+            // if someone had sent us some xck.
             public_key tx_pubkey;
 
             derive_public_key(derivation,
@@ -7056,7 +7056,7 @@ get_tx_details(const transaction& tx,
     txd.additional_pks = cryptonote::get_additional_tx_pub_keys_from_extra(tx);
 
 
-    // sum xca in inputs and ouputs in the given tx
+    // sum xck in inputs and ouputs in the given tx
     const array<uint64_t, 4>& sum_data = summary_of_in_out_rct(
             tx, txd.output_pub_keys, txd.input_key_imgs);
 
@@ -7361,7 +7361,7 @@ get_footer()
             {"last_git_commit_hash", string {GIT_COMMIT_HASH}},
             {"last_git_commit_date", string {GIT_COMMIT_DATETIME}},
             {"git_branch_name"     , string {GIT_BRANCH_NAME}},
-            {"monero_version_full" , string {XCASH_VERSION_FULL}},
+            {"xcash_version_full" , string {XCASH_VERSION_FULL}},
             {"api"                 , std::to_string(ONIONEXPLORER_RPC_VERSION_MAJOR)
                                      + "."
                                      + std::to_string(ONIONEXPLORER_RPC_VERSION_MINOR)},

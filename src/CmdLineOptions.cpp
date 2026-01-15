@@ -18,7 +18,7 @@ namespace xmreg
         p.add("txhash", -1);
 
         options_description desc(
-                "xmrblocks, XCash Blockchain Explorer");
+                "xmrblocks, XCash-Labs Blockchain Explorer");
 
         desc.add_options()
                 ("help,h", value<bool>()->default_value(false)->implicit_value(true),
@@ -44,7 +44,7 @@ namespace xmreg
                 ("enable-autorefresh-option", value<bool>()->default_value(false)->implicit_value(true),
                  "enable users to have the index page on autorefresh")
                 ("enable-emission-monitor", value<bool>()->default_value(false)->implicit_value(true),
-                 "enable XCash total emission monitoring thread")
+                 "enable XCash-Labs total emission monitoring thread")
                 ("port,p", value<string>()->default_value("8081"),
                  "default explorer port")
                 ("bindaddr,x", value<string>()->default_value("0.0.0.0"),
@@ -74,7 +74,7 @@ namespace xmreg
                 ("daemon-login", value<string>(),
                  "Specify username[:password] for daemon RPC client")
                 ("daemon-url,d", value<string>()->default_value("127.0.0.1:18281"),
-                 "XCash daemon url")
+                 "XCash-Labs daemon url")
                 ("enable-mixin-guess", value<bool>()->default_value(false)->implicit_value(true),
                  "enable guessing real outputs in key images based on viewkey");
 

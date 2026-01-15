@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2022, The XCash Project
+// Copyright (c) 2019-2022, The XCash-Labs Project
 //
 // All rights reserved.
 //
