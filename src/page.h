@@ -383,7 +383,7 @@ static inline bool verify_public_tx_v1(const xmreg::public_v1& p,
   // 2) Rebuild canonical message
   std::string msg;
   {
-    static const char* DOMAIN = "XCA-PUBLIC-TX-v1";
+    static const char* DOMAIN = "XCK-PUBLIC-TX-v1";
     msg.append(DOMAIN, std::strlen(DOMAIN));
 
     msg.append(reinterpret_cast<const char*>(&R_from_tx), sizeof(R_from_tx));
