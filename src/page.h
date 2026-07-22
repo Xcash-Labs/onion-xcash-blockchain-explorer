@@ -6586,7 +6586,7 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
           context["has_public_extra"] = ok;
 
           if (ok) {
-            // atomic → XCA with 6 decimals
+            // atomic → XCK with 6 decimals
             auto to_xca = [](uint64_t atomic) -> std::string {
               uint64_t whole = atomic / 1'000'000ULL;
               uint64_t frac = atomic % 1'000'000ULL;
