@@ -6606,7 +6606,7 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
                 {"sender_str", p.sender_str},                   // Base58
                 {"recipient_str", p.recipient_str},             // Base58
                 {"out_index", static_cast<uint64_t>(p.out_index)},
-                {"amount_xca", to_xca(p.amount_atomic)},  // preformatted XCA
+                {"amount_xca", to_xca(p.amount_atomic)},  // preformatted XCK
                 {"amount_atomic", p.amount_atomic},       // uint64_t
                 {"sig", p.sig},                           // 64B hex
                 {"sig_ok", sig_ok},                       // bool
